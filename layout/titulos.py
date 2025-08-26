@@ -1,8 +1,10 @@
 import streamlit as st
 import time
-st.header("Nome: Mirella Fraga Souza",anchor="home")
 
 st.title("Tema: Monitoramento da Contratação de Servidores em Designação Temporária da SRE Carapina")
+st.header("Nome: Mirella Fraga Souza",anchor="home")
+
+
 st.write("A partir da escolha do edital, o usuário monitorar as listas de classificação para contratação de professores.")
 st.write("Base de Dados: base da dados interna da SRE")
 
