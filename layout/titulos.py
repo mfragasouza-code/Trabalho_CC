@@ -50,110 +50,85 @@ for m in municipios:
         dados_municipios[m] = df
 
 # ------------------------------------------------------------
-# CRIAÇÃO DAS ABAS
+# ABAS PRINCIPAIS DO DASHBOARD
 # ------------------------------------------------------------
-aba_geral, aba_barras, aba_pizza = st.tabs([
+aba1, aba2, aba3 = st.tabs([
     "📊 Visão Geral",
-    "🏙️ Gráficos Comparativos entre Municípios",
-    "🥧 Gráficos de Pizza por Município e Disciplina"
+    "🏙️ Comparativo entre Municípios",
+    "🥧 Gráficos de Pizza por Disciplina"
 ])
 
 # ------------------------------------------------------------
-# 📊 ABA 1 — VISÃO GERAL
+# ABA 1 - VISÃO GERAL
 # ------------------------------------------------------------
-with aba_geral:
-    st.header("📊 Visão Geral das Disciplinas por Município")
+with aba1:
+    st.header("📊 Visão Geral dos Indicadores")
+    st.write("Resumo geral dos dados por município e disciplina.")
 
-    for m, df in dados_municipios.items():
-        if not df.empty:
-            st.subheader(f"📍 {m}")
-            
-            # Padroniza os nomes das colunas
-            df.columns = df.columns.str.strip().str.lower()
+    # Exemplo de gráfico de barras geral (ajuste conforme seus dados)
+    fig_geral = px.bar(
+        df,
+        x="Município",
+        y="Total de candidatos",
+        color="Município",
+        title="Total de Candidatos por Município"
+    )
+    st.plotly_chart(fig_geral, use_container_width=True)
 
-            # Estatísticas básicas por disciplina
-            st.dataframe(df.describe(include='all'))
-
-            # Gráfico de barras por disciplina
-            col_disciplina = next((c for c in df.columns if "disciplina" in c), None)
-            col_total = next((c for c in df.columns if "total" in c and "candidato" in c), None)
-
-            if col_disciplina and col_total:
-                fig_total = px.bar(
-                    df,
-                    x=col_disciplina,
-                    y=col_total,
-                    title=f"Total de Candidatos por Disciplina - {m}",
-                    labels={"x": "Disciplina", "y": "Quantidade"}
-                )
-                st.plotly_chart(fig_total, use_container_width=True)
 
 # ------------------------------------------------------------
-# 🏙️ ABA 2 — GRÁFICOS DE BARRAS COMPARATIVOS
+# ABA 2 - GRÁFICOS DE BARRAS COMPARATIVOS ENTRE MUNICÍPIOS
 # ------------------------------------------------------------
-with aba_barras:
-    st.header("🏙️ Comparativo de Disciplinas entre Municípios")
+with aba2:
+    st.header("🏙️ Gráficos Comparativos entre Municípios")
+    st.write("Comparação entre indicadores de diferentes municípios.")
 
-    # Criação de base consolidada
-    dfs_renomeados = []
-    for m, df in dados_municipios.items():
-        if not df.empty:
-            df = df.copy()
-            df.columns = df.columns.str.strip().str.lower()
-            col_disciplina = next((c for c in df.columns if "disciplina" in c), None)
-            col_total = next((c for c in df.columns if "total" in c and "candidato" in c), None)
-            if col_disciplina and col_total:
-                df["município"] = m
-                dfs_renomeados.append(df[[col_disciplina, col_total, "município"]])
-
-    if dfs_renomeados:
-        df_comparativo = pd.concat(dfs_renomeados)
-        fig_comp = px.bar(
-            df_comparativo,
-            x="disciplina",
-            y=col_total,
-            color="município",
-            barmode="group",
-            title="Comparativo de Candidatos por Disciplina entre Municípios",
-            labels={"disciplina": "Disciplina", "quantidade": "Quantidade"}
+    indicadores = ["Convocados", "Eliminados", "Reclassificados", "Documentos analisados"]
+    for indicador in indicadores:
+        fig_bar = px.bar(
+            df,
+            x="Município",
+            y=indicador,
+            color="Município",
+            title=f"{indicador} por Município"
         )
-        st.plotly_chart(fig_comp, use_container_width=True)
+        st.plotly_chart(fig_bar, use_container_width=True)
+
 
 # ------------------------------------------------------------
-# GRÁFICOS DE PIZZA POR MUNICÍPIO E DISCIPLINA
+# ABA 3 - GRÁFICOS DE PIZZA POR MUNICÍPIO E DISCIPLINA
 # ------------------------------------------------------------
 with aba3:
     st.header("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
+    st.write("Visualização detalhada dos indicadores por disciplina, com totais ao lado dos gráficos.")
 
-    for m, df in dados_municipios.items():
-        if not df.empty:
-            st.subheader(f"{m}")
+    for m, df_municipio in dados_municipios.items():
+        if not df_municipio.empty:
+            st.subheader(f"🏫 {m}")
 
-            for _, linha in df.iterrows():
+            for _, linha in df_municipio.iterrows():
                 disciplina = linha["Disciplina"]
 
-                # Fatias da pizza (sem total e sem documentos analisados)
-                valores = linha[["Aguardando análise", "Eliminados", "Reclassificados"]]
+                # Retira "Documentos analisados" da pizza
+                valores_pizza = linha[["Convocados", "Eliminados", "Reclassificados"]]
 
-                # Indicadores complementares
-                total_candidatos = linha["Total de candidatos"]
-                documentos_analisados = linha["Documentos analisados"]
-                convocados = linha["Convocados"]
-
-                # Criar gráfico de pizza
+                # Cria o gráfico de pizza
                 fig_pizza = px.pie(
-                    values=valores.values,
-                    names=valores.index,
-                    title=f"{disciplina} - {m}",
-                    color_discrete_sequence=px.colors.qualitative.Pastel
+                    values=valores_pizza.values,
+                    names=valores_pizza.index,
+                    title=f"{disciplina} - {m}"
                 )
 
-                # Layout de duas colunas — gráfico + indicadores
-                col1, col2 = st.columns([3, 1])
+                # Mostra gráfico e totais lado a lado
+                col1, col2 = st.columns([2, 1])
+
                 with col1:
                     st.plotly_chart(fig_pizza, use_container_width=True)
+
                 with col2:
-                    st.markdown(f"**📘 Disciplina:** {disciplina}")
-                    st.markdown(f"**👥 Total de candidatos:** {int(total_candidatos)}")
-                    st.markdown(f"**📄 Documentos analisados:** {int(documentos_analisados)}")
-                    st.markdown(f"**📋 Convocados:** {int(convocados)}")
+                    st.markdown(f"""
+                    **📘 Disciplina:** {disciplina}  
+                    **👥 Total de candidatos:** {linha['Total de candidatos']}  
+                    **📄 Documentos analisados:** {linha['Documentos analisados']}  
+                    **✅ Convocados:** {linha['Convocados']}
+                    """)
