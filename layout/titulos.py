@@ -110,7 +110,7 @@ with aba3:
                 disciplina = linha["Disciplina"]
 
                 # Retira "Documentos analisados" da pizza
-                valores_pizza = linha[["Convocados", "Eliminados", "Reclassificados"]]
+                valores_pizza = linha[["Aguardando análise", "Contratados","Eliminados", "Reclassificados"]]
 
                 # Cria o gráfico de pizza
                 fig_pizza = px.pie(
