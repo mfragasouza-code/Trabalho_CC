@@ -76,7 +76,7 @@ else:
 st.header("🏙️ Comparativo de Disciplinas entre Municípios")
 
 # Confirma se todos os municípios têm dados
-if any(dados_municipios.values()):
+if any(not df.empty for df in dados_municipios.values()):
     # Junta todos os dados
     lista_dfs = [df for df in dados_municipios.values() if not df.empty]
     df_comparativo = pd.concat(lista_dfs, ignore_index=True)
