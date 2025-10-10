@@ -63,7 +63,7 @@ aba1, aba2, aba3 = st.tabs([
 # ------------------------------------------------------------
 with aba1:
     st.header("📊 Visão Geral dos Indicadores")
-    st.write("Nesta aba você confere o somatório geral dos principais indicadores por município.")
+    st.write("Nesta aba você confere o somatório geral dos principais indicadores por município, apresentados separadamente em gráficos de barras.")
 
     # Lista das colunas que serão somadas
     colunas_soma = [
@@ -83,18 +83,27 @@ with aba1:
     df_soma = df.groupby("Município")[colunas_existentes].sum().reset_index()
 
     # Exibe tabela resumo
+    st.subheader("📋 Totais Gerais por Município")
     st.dataframe(df_soma, use_container_width=True)
 
-    # Gera gráfico de barras empilhadas
-    fig_geral = px.bar(
-        df_soma,
-        x="Município",
-        y=colunas_existentes,
-        title="Distribuição dos Indicadores por Município",
-        barmode="group"
-    )
+    st.markdown("---")
 
-    st.plotly_chart(fig_geral, use_container_width=True)
+    # Gera um gráfico separado para cada indicador
+    for col in colunas_existentes:
+        st.subheader(f"📈 {col} por Município")
+        fig = px.bar(
+            df_soma,
+            x="Município",
+            y=col,
+            text=col,
+            title=f"{col} - Comparativo entre Municípios",
+            color="Município"
+        )
+        fig.update_traces(texttemplate='%{text:.0f}', textposition='outside')
+        fig.update_layout(showlegend=False, yaxis_title="Quantidade")
+        st.plotly_chart(fig, use_container_width=True)
+        st.markdown("---")
+
 
 # ------------------------------------------------------------
 # ABA 2 - GRÁFICOS DE BARRAS COMPARATIVOS ENTRE MUNICÍPIOS
