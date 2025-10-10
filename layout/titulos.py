@@ -90,5 +90,54 @@ with aba1:
     colunas_qtd = [c for c in df_total.columns if "Total" in c or "total" in c or "Quantidade" in c]
 
     if colunas_qtd:
+        col_qtd = st.selectbox("Selecione a coluna de quantidade:", colunas_qtd)
+    else:
+        st.error("Não foi possível identificar a coluna de quantidade total.")
+        st.stop()
 
+    disciplinas = sorted(df_total["Disciplina"].dropna().unique().tolist())
+    disciplina_escolhida = st.selectbox("Escolha uma disciplina:", disciplinas)
 
+    df_disciplina = df_total[df_total["Disciplina"] == disciplina_escolhida]
+
+    fig_barra = px.bar(
+        df_disciplina,
+        x="Município",
+        y=col_qtd,
+        color="Município",
+        text=col_qtd,
+        title=f"Comparativo entre municípios - {disciplina_escolhida}",
+    )
+    fig_barra.update_traces(textposition="outside")
+    fig_barra.update_layout(showlegend=False, yaxis_title="Quantidade")
+
+    st.plotly_chart(fig_barra, use_container_width=True)
+
+# ---------------------------
+# ABA 2: GRÁFICOS DE PIZZA POR DISCIPLINA
+# ---------------------------
+with aba2:
+    st.subheader("🥧 Distribuição interna por Disciplina e Município")
+
+    indicadores = [c for c in df_total.columns if any(p in c.lower() for p in ["convocado", "eliminado", "reclass", "document", "total"])]
+
+    if indicadores:
+        indicador_escolhido = st.selectbox("Selecione o indicador:", indicadores)
+    else:
+        st.warning("Nenhuma coluna de indicador encontrada.")
+        st.stop()
+
+    # Gera um gráfico de pizza para cada município
+    for municipio in municipios:
+        df_mun = df_total[df_total["Município"] == municipio]
+        if not df_mun.empty:
+            st.markdown(f"### 📍 {municipio}")
+            fig_pizza = px.pie(
+                df_mun,
+                names="Disciplina",
+                values=indicador_escolhido,
+                title=f"Distribuição de {indicador_escolhido} por Disciplina - {municipio}"
+            )
+            st.plotly_chart(fig_pizza, use_container_width=True)
+        else:
+            st.info(f"Sem dados disponíveis para {municipio}.")
