@@ -1,143 +1,124 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from io import BytesIO
 
-# ===========================
-# CONFIGURAÇÕES INICIAIS
-# ===========================
-st.set_page_config(
-    page_title="Painel de Contratação - Municípios",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# -------------------------------------------
+# CONFIGURAÇÃO INICIAL
+# -------------------------------------------
+st.set_page_config(page_title="Análise dos Editais", layout="wide")
 
-st.title("🏙️ Painel Interativo de Contratação por Município")
-st.markdown(
-    """
-    Este painel apresenta dados consolidados dos processos de contratação de diferentes municípios,
-    permitindo comparações entre disciplinas e indicadores.
-    """
-)
+st.title("📊 Painel de Análise dos Editais por Município")
 
-# ===========================
-# FUNÇÃO PARA CARREGAR PLANILHAS
-# ===========================
-@st.cache_data
-def carregar_planilhas(municipio, arquivo):
-    # Abas que devem ser ignoradas
-    abas_excluir = ["AUX", "INDICE", "LOG", "CHAMADA", "Configuração de Email"]
-
-    xls = pd.ExcelFile(arquivo)
-    dados_municipio = []
-
+# -------------------------------------------
+# FUNÇÃO PARA LER TODAS AS ABAS DE UM EXCEL
+# -------------------------------------------
+def carregar_dados(caminho_arquivo):
+    abas_excluir = ["AUX", "INDICE", "Log", "CHAMADA", "Configuração de Email"]
+    xls = pd.ExcelFile(caminho_arquivo)
+    dados = {}
     for aba in xls.sheet_names:
-        if aba.upper() not in [a.upper() for a in abas_excluir]:
-            df = pd.read_excel(xls, sheet_name=aba)
-            df["Disciplina"] = aba
-            df["Município"] = municipio
-            dados_municipio.append(df)
+        if aba not in abas_excluir:
+            df = pd.read_excel(xls, aba)
+            dados[aba] = df
+    return dados
 
-    if dados_municipio:
-        df_municipio = pd.concat(dados_municipio, ignore_index=True)
-        # Excluir colunas desnecessárias, se existirem
-        colunas_excluir = ["Ampla Concorrência", "Negros", "Deficientes", "Indígenas"]
-        df_municipio = df_municipio.drop(columns=[c for c in colunas_excluir if c in df_municipio.columns], errors="ignore")
-        return df_municipio
-    else:
-        return pd.DataFrame()
+# -------------------------------------------
+# UPLOAD DOS 4 ARQUIVOS POR EDITAL
+# -------------------------------------------
+st.sidebar.header("📂 Upload dos Arquivos Excel")
+st.sidebar.markdown("Envie os 4 arquivos (um por município) de um mesmo edital.")
 
-# ===========================
-# UPLOAD DOS ARQUIVOS (4 MUNICÍPIOS)
-# ===========================
-st.sidebar.header("📂 Carregue os arquivos de cada município")
-
-arquivos = {}
 municipios = ["Vitória", "Serra", "Santa Teresa", "Fundão"]
 
-for municipio in municipios:
-    arquivos[municipio] = st.sidebar.file_uploader(f"📘 {municipio}", type=["xlsx"])
+arquivos = {}
+for m in municipios:
+    arquivos[m] = st.sidebar.file_uploader(f"Arquivo de {m}", type=["xlsx"], key=m)
 
-# ===========================
-# PROCESSAR DADOS
-# ===========================
-dfs = []
-for municipio, arquivo in arquivos.items():
-    if arquivo is not None:
-        df_mun = carregar_planilhas(municipio, arquivo)
-        if not df_mun.empty:
-            dfs.append(df_mun)
+# -------------------------------------------
+# LEITURA E ORGANIZAÇÃO DOS DADOS
+# -------------------------------------------
+dados_municipios = {}
+for m in municipios:
+    if arquivos[m]:
+        dados_municipios[m] = carregar_dados(arquivos[m])
 
-if dfs:
-    df_total = pd.concat(dfs, ignore_index=True)
-    st.success("✅ Dados carregados com sucesso para os municípios selecionados.")
+# -------------------------------------------
+# ABA DE VISÃO GERAL
+# -------------------------------------------
+st.header("📈 Visão Geral")
+
+aba = st.selectbox("Selecione o Município:", municipios)
+
+if aba in dados_municipios:
+    dfs = dados_municipios[aba]
+    
+    # Combinar todas as disciplinas em um único DataFrame
+    df_total = pd.concat(dfs.values(), ignore_index=True)
+    
+    # Estatísticas gerais do município
+    st.subheader(f"Estatísticas Gerais - {aba}")
+    st.dataframe(df_total.describe())
+    
+    # Estatísticas por disciplina
+    st.subheader("📊 Estatísticas por Disciplina")
+    for disciplina, df in dfs.items():
+        st.markdown(f"**Disciplina: {disciplina}**")
+        st.dataframe(df.describe())
 else:
-    st.warning("Envie ao menos um arquivo Excel para começar a análise.")
-    st.stop()
+    st.info("Envie os arquivos para visualizar os dados.")
 
-# ===========================
-# ABA 1 - VISÃO GERAL
-# ===========================
-aba1, aba2 = st.tabs(["📈 Visão Comparativa", "🥧 Gráficos por Disciplina"])
+# -------------------------------------------
+# GRÁFICOS DE BARRAS COMPARATIVOS ENTRE MUNICÍPIOS
+# -------------------------------------------
+st.header("🏙️ Comparativo entre Municípios")
 
-# ---------------------------
-# ABA 1: GRÁFICO DE BARRAS COMPARATIVO
-# ---------------------------
-with aba1:
-    st.subheader("📊 Comparativo entre Municípios por Disciplina")
+# Verifica se há dados de todos os municípios
+if all(m in dados_municipios for m in municipios):
+    # Combina os dados de todos os municípios em um único DataFrame
+    lista_dfs = []
+    for m in municipios:
+        for disciplina, df in dados_municipios[m].items():
+            df_temp = df.copy()
+            df_temp["Município"] = m
+            df_temp["Disciplina"] = disciplina
+            lista_dfs.append(df_temp)
+    df_comparativo = pd.concat(lista_dfs, ignore_index=True)
+    
+    # Selecionar disciplina para comparar
+    disciplinas = df_comparativo["Disciplina"].unique()
+    disciplina_selecionada = st.selectbox("Selecione uma disciplina para comparar:", disciplinas)
+    
+    df_disciplina = df_comparativo[df_comparativo["Disciplina"] == disciplina_selecionada]
+    colunas_qtd = ["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Documentos analisados"]
+    
+    for coluna in colunas_qtd:
+        if coluna in df_disciplina.columns:
+            fig_bar = px.bar(df_disciplina, x="Município", y=coluna, color="Município",
+                             title=f"{coluna} por Município - {disciplina_selecionada}",
+                             labels={"y": "Quantidade"})
+            st.plotly_chart(fig_bar, use_container_width=True)
+else:
+    st.warning("Envie os arquivos de todos os municípios para visualizar o comparativo.")
 
-    # Verifica se existe a coluna "Total de Candidatos" ou similar
-    colunas_qtd = [c for c in df_total.columns if "Total" in c or "total" in c or "Quantidade" in c]
+# -------------------------------------------
+# GRÁFICOS DE PIZZA DE CADA DISCIPLINA POR MUNICÍPIO
+# -------------------------------------------
+st.header("🥧 Gráficos de Pizza por Município e Disciplina")
 
-    if colunas_qtd:
-        col_qtd = st.selectbox("Selecione a coluna de quantidade:", colunas_qtd)
-    else:
-        st.error("Não foi possível identificar a coluna de quantidade total.")
-        st.stop()
+for m in municipios:
+    if m in dados_municipios:
+        st.subheader(f"{m}")
+        for disciplina, df in dados_municipios[m].items():
+            st.markdown(f"**Disciplina: {disciplina}**")
+            if all(col in df.columns for col in ["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Documentos analisados"]):
+                valores = df[["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Documentos analisados"]].sum()
+                fig_pizza = px.pie(values=valores, names=valores.index,
+                                   title=f"Distribuição - {disciplina} ({m})")
+                st.plotly_chart(fig_pizza, use_container_width=True)
+            else:
+                st.warning(f"Algumas colunas estão faltando em {disciplina} ({m})")
 
-    disciplinas = sorted(df_total["Disciplina"].dropna().unique().tolist())
-    disciplina_escolhida = st.selectbox("Escolha uma disciplina:", disciplinas)
-
-    df_disciplina = df_total[df_total["Disciplina"] == disciplina_escolhida]
-
-    fig_barra = px.bar(
-        df_disciplina,
-        x="Município",
-        y=col_qtd,
-        color="Município",
-        text=col_qtd,
-        title=f"Comparativo entre municípios - {disciplina_escolhida}",
-    )
-    fig_barra.update_traces(textposition="outside")
-    fig_barra.update_layout(showlegend=False, yaxis_title="Quantidade")
-
-    st.plotly_chart(fig_barra, use_container_width=True)
-
-# ---------------------------
-# ABA 2: GRÁFICOS DE PIZZA POR DISCIPLINA
-# ---------------------------
-with aba2:
-    st.subheader("🥧 Distribuição interna por Disciplina e Município")
-
-    indicadores = [c for c in df_total.columns if any(p in c.lower() for p in ["convocado", "eliminado", "reclass", "document", "total"])]
-
-    if indicadores:
-        indicador_escolhido = st.selectbox("Selecione o indicador:", indicadores)
-    else:
-        st.warning("Nenhuma coluna de indicador encontrada.")
-        st.stop()
-
-    # Gera um gráfico de pizza para cada município
-    for municipio in municipios:
-        df_mun = df_total[df_total["Município"] == municipio]
-        if not df_mun.empty:
-            st.markdown(f"### 📍 {municipio}")
-            fig_pizza = px.pie(
-                df_mun,
-                names="Disciplina",
-                values=indicador_escolhido,
-                title=f"Distribuição de {indicador_escolhido} por Disciplina - {municipio}"
-            )
-            st.plotly_chart(fig_pizza, use_container_width=True)
-        else:
-            st.info(f"Sem dados disponíveis para {municipio}.")
+# -------------------------------------------
+# FIM
+# -------------------------------------------
+st.success("✅ Painel carregado com sucesso!")
