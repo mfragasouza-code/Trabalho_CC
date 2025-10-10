@@ -120,41 +120,40 @@ with aba_barras:
         st.plotly_chart(fig_comp, use_container_width=True)
 
 # ------------------------------------------------------------
-# 🥧 ABA 3 — GRÁFICOS DE PIZZA
+# GRÁFICOS DE PIZZA POR MUNICÍPIO E DISCIPLINA
 # ------------------------------------------------------------
-with aba_pizza:
+with aba3:
     st.header("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
 
     for m, df in dados_municipios.items():
         if not df.empty:
             st.subheader(f"{m}")
-            df.columns = df.columns.str.strip().str.lower()
-
-            col_disciplina = next((c for c in df.columns if "disciplina" in c), None)
-            col_total = next((c for c in df.columns if "total" in c and "candidato" in c), None)
 
             for _, linha in df.iterrows():
-                disciplina = linha[col_disciplina]
-                total_candidatos = linha[col_total] if col_total in df.columns else None
+                disciplina = linha["Disciplina"]
 
-                # Seleciona apenas os indicadores
-                colunas_indicadores = [c for c in df.columns if c not in [col_disciplina, col_total, "município"]]
-                valores = linha[colunas_indicadores]
+                # Fatias da pizza (sem total e sem documentos analisados)
+                valores = linha[["Convocados", "Eliminados", "Reclassificados"]]
 
-                # Criação do gráfico de pizza
+                # Indicadores complementares
+                total_candidatos = linha["Total de candidatos"]
+                documentos_analisados = linha["Documentos analisados"]
+                convocados = linha["Convocados"]
+
+                # Criar gráfico de pizza
                 fig_pizza = px.pie(
                     values=valores.values,
-                    names=[c.title() for c in colunas_indicadores],
-                    title=f"{disciplina} - {m}"
+                    names=valores.index,
+                    title=f"{disciplina} - {m}",
+                    color_discrete_sequence=px.colors.qualitative.Pastel
                 )
 
-                # Exibição lado a lado
+                # Layout de duas colunas — gráfico + indicadores
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     st.plotly_chart(fig_pizza, use_container_width=True)
                 with col2:
-                    if total_candidatos is not None:
-                        st.markdown(f"""
-                        **Total de Candidatos:**  
-                        <span style='font-size:1.5em; color:#2c5282; font-weight:bold;'>{int(total_candidatos)}</span>
-                        """, unsafe_allow_html=True)
+                    st.markdown(f"**📘 Disciplina:** {disciplina}")
+                    st.markdown(f"**👥 Total de candidatos:** {int(total_candidatos)}")
+                    st.markdown(f"**📄 Documentos analisados:** {int(documentos_analisados)}")
+                    st.markdown(f"**📋 Convocados:** {int(convocados)}")
