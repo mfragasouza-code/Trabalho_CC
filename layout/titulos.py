@@ -2,6 +2,43 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 
+
+# ------------------------------------------------------------
+# CONFIGURAÇÕES GERAIS DO APP
+# ------------------------------------------------------------
+st.set_page_config(page_title="Painel de Análise dos Editais", layout="wide")
+
+st.title("📊 Painel de Acompanhamento dos Editais por Município")
+
+# ------------------------------------------------------------
+# FUNÇÃO PARA LER E UNIFICAR AS ABAS VÁLIDAS
+# ------------------------------------------------------------
+def carregar_dados(caminho_arquivo):
+    abas_excluir = ["AUX", "INDICE", "Log", "CHAMADA", "Configuração de Email"]
+    xls = pd.ExcelFile(caminho_arquivo)
+    dados = []
+    for aba in xls.sheet_names:
+        if aba not in abas_excluir:
+            df = pd.read_excel(xls, aba)
+            dados.append(df)
+    if dados:
+        df_final = pd.concat(dados, ignore_index=True)
+        return df_final
+    else:
+        return pd.DataFrame()
+
+# ------------------------------------------------------------
+# UPLOAD DOS ARQUIVOS (UM PARA CADA MUNICÍPIO)
+# ------------------------------------------------------------
+st.sidebar.header("📂 Envie os arquivos Excel")
+st.sidebar.markdown("Cada arquivo deve conter as disciplinas de um município.")
+
+municipios = ["Vitória", "Serra", "Santa Teresa", "Fundão"]
+
+arquivos = {}
+for m in municipios:
+    arquivos[m] = st.sidebar.file_uploader(f"Arquivo de {m}", type=["xlsx"], key=m)
+
 # ------------------------------------------------------------
 # LEITURA DOS ARQUIVOS
 # ------------------------------------------------------------
