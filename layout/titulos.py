@@ -133,7 +133,7 @@ with aba3:
                 disciplina = linha["Disciplina"]
 
                 # Fatias da pizza (sem total e sem documentos analisados)
-                valores = linha[["Convocados", "Eliminados", "Reclassificados"]]
+                valores = linha[["Aguardando análise", "Eliminados", "Reclassificados"]]
 
                 # Indicadores complementares
                 total_candidatos = linha["Total de candidatos"]
