@@ -3,9 +3,14 @@ import plotly.express as px
 import pandas as pd
 
 # ------------------------------------------------------------
-# Supondo que você já tenha carregado os dados em:
-# dados_municipios = {"Vitória": df_vitoria, "Serra": df_serra, "Fundão": df_fundao, "Santa Teresa": df_st}
+# LEITURA DOS ARQUIVOS
 # ------------------------------------------------------------
+dados_municipios = {}
+for m in municipios:
+    if arquivos[m]:
+        df = carregar_dados(arquivos[m])
+        df["Município"] = m
+        dados_municipios[m] = df
 
 # ------------------------------------------------------------
 # CRIAÇÃO DAS ABAS
