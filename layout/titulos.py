@@ -105,3 +105,60 @@ with aba1:
             )
 
             st.markdown("---")
+# ------------------------------------------------------------
+# ABA 2 - GRÁFICOS DE BARRAS COMPARATIVOS ENTRE MUNICÍPIOS
+# ------------------------------------------------------------
+with aba2:
+    st.header("🏙️ Gráficos Comparativos entre Municípios")
+    st.write("Comparação entre indicadores de diferentes municípios.")
+
+    indicadores = ["Convocados", "Eliminados", "Reclassificados", "Documentos analisados"]
+    for indicador in indicadores:
+        fig_bar = px.bar(
+            df,
+            x="Município",
+            y=indicador,
+            color="Município",
+            title=f"{indicador} por Município"
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+
+# ------------------------------------------------------------
+# ABA 3 - GRÁFICOS DE PIZZA POR MUNICÍPIO E DISCIPLINA
+# ------------------------------------------------------------
+with aba3:
+    st.header("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
+    st.write("Visualização detalhada dos indicadores por disciplina, com totais ao lado dos gráficos.")
+
+    for m, df_municipio in dados_municipios.items():
+        if not df_municipio.empty:
+            st.subheader(f"🏫 {m}")
+
+            for _, linha in df_municipio.iterrows():
+                disciplina = linha["Disciplina"]
+
+                # Retira "Documentos analisados" da pizza
+                valores_pizza = linha[["Aguardando análise", "Contratados","Eliminados", "Reclassificados"]]
+
+                # Cria o gráfico de pizza
+                fig_pizza = px.pie(
+                    values=valores_pizza.values,
+                    names=valores_pizza.index,
+                    title=f"{disciplina} - {m}"
+                )
+
+                # Mostra gráfico e totais lado a lado
+                col1, col2 = st.columns([2, 1])
+
+                with col1:
+                    st.plotly_chart(fig_pizza, use_container_width=True)
+
+                with col2:
+                    st.markdown(f"""
+                    **📘 Disciplina:** {disciplina}  
+                    **👥 Total de candidatos:** {linha['Total de candidatos']}  
+                    **📄 Documentos analisados:** {linha['Documentos analisados']}  
+                    **✅ Convocados:** {linha['Convocados']}
+                    """)
+
