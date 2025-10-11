@@ -50,8 +50,6 @@ def carregar_dados():
 
 dados_municipios = carregar_dados()
 
-# --- Exemplo de exibição ---
-st.title("📊 Comparativo entre Municípios")
 
 # Loop pelos municípios
 for municipio, df_mun in dados_municipios.items():
