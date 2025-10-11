@@ -27,26 +27,46 @@ def carregar_dados(caminho_arquivo):
     else:
         return pd.DataFrame()
 
-# --- Carregar as 4 bases diretamente ---
+import pandas as pd
+import streamlit as st
+import plotly.express as px
+
+# --- Carregar as bases de dados ---
 @st.cache_data
 def carregar_dados():
-    # Leitura dos 4 arquivos locais
     vitoria = pd.read_excel("vitoria.xlsx")
     serra = pd.read_excel("serra.xlsx")
     fundao = pd.read_excel("fundao.xlsx")
     santa_teresa = pd.read_excel("santa_teresa.xlsx")
+    
+    # Cria um dicionário para facilitar o loop
+    dados_municipios = {
+        "Vitória": vitoria,
+        "Serra": serra,
+        "Fundão": fundao,
+        "Santa Teresa": santa_teresa
+    }
+    return dados_municipios
 
-    # Adiciona uma coluna identificando o município (caso não exista)
-    vitoria["Município"] = "Vitória"
-    serra["Município"] = "Serra"
-    fundao["Município"] = "Fundão"
-    santa_teresa["Município"] = "Santa Teresa"
+dados_municipios = carregar_dados()
 
-    # Junta todas as bases
-    df = pd.concat([vitoria, serra, fundao, santa_teresa], ignore_index=True)
-    return df
+# --- Exemplo de exibição ---
+st.title("📊 Comparativo entre Municípios")
 
-df = carregar_dados()
+# Loop pelos municípios
+for municipio, df_mun in dados_municipios.items():
+    st.subheader(f"Indicadores de {municipio}")
+    st.dataframe(df_mun.head())
+
+    # Gráfico de exemplo (pode trocar as colunas conforme seu dataset)
+    if "Total de candidatos" in df_mun.columns:
+        fig = px.bar(
+            df_mun,
+            x="Disciplina",
+            y="Total de candidatos",
+            title=f"Total de Candidatos - {municipio}"
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------------------------------------
 # ABAS PRINCIPAIS DO DASHBOARD
