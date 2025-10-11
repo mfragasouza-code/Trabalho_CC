@@ -27,27 +27,26 @@ def carregar_dados(caminho_arquivo):
     else:
         return pd.DataFrame()
 
-# ------------------------------------------------------------
-# UPLOAD DOS ARQUIVOS (UM PARA CADA MUNICÍPIO)
-# ------------------------------------------------------------
-st.sidebar.header("📂 Envie os arquivos Excel")
-st.sidebar.markdown("Cada arquivo deve conter as disciplinas de um município.")
+# --- Carregar as 4 bases diretamente ---
+@st.cache_data
+def carregar_dados():
+    # Leitura dos 4 arquivos locais
+    vitoria = pd.read_csv("vitoria.csv", sep=";", encoding="utf-8")
+    serra = pd.read_csv("serra.csv", sep=";", encoding="utf-8")
+    fundao = pd.read_csv("fundao.csv", sep=";", encoding="utf-8")
+    santa_teresa = pd.read_csv("santa_teresa.csv", sep=";", encoding="utf-8")
 
-municipios = ["Vitória", "Serra", "Santa Teresa", "Fundão"]
+    # Adiciona uma coluna identificando o município (caso não exista)
+    vitoria["Município"] = "Vitória"
+    serra["Município"] = "Serra"
+    fundao["Município"] = "Fundão"
+    santa_teresa["Município"] = "Santa Teresa"
 
-arquivos = {}
-for m in municipios:
-    arquivos[m] = st.sidebar.file_uploader(f"Arquivo de {m}", type=["xlsx"], key=m)
+    # Junta todas as bases
+    df = pd.concat([vitoria, serra, fundao, santa_teresa], ignore_index=True)
+    return df
 
-# ------------------------------------------------------------
-# LEITURA DOS ARQUIVOS
-# ------------------------------------------------------------
-dados_municipios = {}
-for m in municipios:
-    if arquivos[m]:
-        df = carregar_dados(arquivos[m])
-        df["Município"] = m
-        dados_municipios[m] = df
+df = carregar_dados()
 
 # ------------------------------------------------------------
 # ABAS PRINCIPAIS DO DASHBOARD
