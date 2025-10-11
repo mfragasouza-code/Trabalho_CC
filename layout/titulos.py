@@ -65,14 +65,14 @@ with aba1:
     st.header("📊 Visão Geral dos Indicadores")
     st.write(
         "Nesta aba, você visualiza o total dos principais indicadores de contratação de professores em designação temporária de **cada município**, "
-        "além de uma tabela descritiva gerada automaticamente com o método `describe()`."
-        "Os dados estão organizados por município, por disciplina e para cada uma há:"
-        "*Total de candidatos: que são candidatos inscritos no ceertame."
-        "*Aguardando análise: que são documentos recebidos a espera de resultado."
-        "*Eliminados: que são candidatos eliminados."
-        "*Reclassificados: que são candidatos que podem ser chamados novamente."
-        "*Contratados: são os professores que foram efetivamente contratados."
-        "*Documentos analisados: são os documentos enviados pelos candidatos e foram analisados e tem um resultado (ou apto, ou reclassificado, ou eliminado)."
+        "além de uma tabela descritiva gerada automaticamente com o método `describe()`. "
+        "Os dados estão organizados por município, por disciplina e para cada uma há: "
+        "*Total de candidatos: que são candidatos inscritos no ceertame. "
+        "*Aguardando análise: que são documentos recebidos a espera de resultado. "
+        "*Eliminados: que são candidatos eliminados. "
+        "*Reclassificados: que são candidatos que podem ser chamados novamente. "
+        "*Contratados: são os professores que foram efetivamente contratados. "
+        "*Documentos analisados: são os documentos enviados pelos candidatos e foram analisados e tem um resultado (ou apto, ou reclassificado, ou eliminado). "
         "*Convocados: candidatos chamados para enviar os documentos para análise."
     )
 
