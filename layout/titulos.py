@@ -106,24 +106,67 @@ with aba1:
 
             st.markdown("---")
 # ------------------------------------------------------------
-# ABA 2 - GRÁFICOS DE BARRAS COMPARATIVOS ENTRE MUNICÍPIOS
+# ABA 2 - GRÁFICOS COMPARATIVOS ENTRE MUNICÍPIOS
 # ------------------------------------------------------------
 with aba2:
-    st.header("🏙️ Gráficos Comparativos entre Municípios")
-    st.write("Comparação entre indicadores de diferentes municípios.")
+    st.header("📊 Comparativo de Disciplinas entre Municípios")
+    st.write(
+        "Nesta aba, você pode comparar os indicadores de cada disciplina entre os diferentes municípios. "
+        "Cada barra representa a mesma disciplina em municípios distintos."
+    )
 
-    indicadores = ["Convocados", "Eliminados", "Reclassificados", "Documentos analisados"]
-    for indicador in indicadores:
-        fig_bar = px.bar(
-            df,
-            x="Município",
-            y=indicador,
-            color="Município",
-            title=f"{indicador} por Município"
+    colunas_interesse = [
+        "Total de candidatos",
+        "Aguardando análise",
+        "Eliminados",
+        "Reclassificados",
+        "Contratados",
+        "Documentos analisados",
+        "Convocados"
+    ]
+
+    # 1️⃣ Unir todas as bases de municípios em um único DataFrame
+    dados_validos = []
+    for municipio, df_mun in dados_municipios.items():
+        if not df_mun.empty:
+            df_temp = df_mun.copy()
+            df_temp["Município"] = municipio  # adiciona a identificação
+            dados_validos.append(df_temp)
+
+    # Verifica se há mais de uma base
+    if len(dados_validos) < 2:
+        st.warning("⚠️ É necessário ter ao menos duas bases de municípios para gerar comparativos.")
+    else:
+        df_comparativo = pd.concat(dados_validos, ignore_index=True)
+
+        # 2️⃣ Escolher indicador e disciplina para comparar
+        indicador_escolhido = st.selectbox(
+            "Selecione o indicador para comparar entre municípios:",
+            colunas_interesse
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
 
+        disciplinas_disponiveis = df_comparativo["Disciplina"].unique()
+        disciplina_escolhida = st.selectbox(
+            "Selecione a disciplina para comparação:",
+            sorted(disciplinas_disponiveis)
+        )
 
+        # 3️⃣ Filtrar e plotar o gráfico
+        df_filtrado = df_comparativo[df_comparativo["Disciplina"] == disciplina_escolhida]
+
+        if not df_filtrado.empty:
+            fig = px.bar(
+                df_filtrado,
+                x="Município",
+                y=indicador_escolhido,
+                color="Município",
+                title=f"{indicador_escolhido} - {disciplina_escolhida}",
+                text=indicador_escolhido
+            )
+            fig.update_layout(yaxis_title="Quantidade", xaxis_title="Município")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Não há dados disponíveis para esta disciplina nos municípios selecionados.")
 # ------------------------------------------------------------
 # ABA 3 - GRÁFICOS DE PIZZA POR MUNICÍPIO E DISCIPLINA
 # ------------------------------------------------------------
