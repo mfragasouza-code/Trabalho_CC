@@ -71,12 +71,13 @@ with aba1:
     # Lista das colunas de interesse
     colunas_interesse = [
         "Total de candidatos",
-        "Aguardando análise",
-        "Eliminados",
-        "Reclassificados",
-        "Contratados",
+        "Convocados",
         "Documentos analisados",
-        "Convocados"
+        "Aguardando análise",
+        "Reclassificados",
+        "Eliminados",
+        "Contratados"
+               
     ]
     # Cria um gráfico separado para cada município
     for municipio, df_mun in dados_municipios.items():
