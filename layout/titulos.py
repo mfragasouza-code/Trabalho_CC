@@ -67,7 +67,17 @@ with aba1:
         "Nesta aba, você visualiza o total dos principais indicadores de **cada município**, "
         "mostrados individualmente em gráficos de barras."
     )
-
+    
+    # Lista das colunas de interesse
+    colunas_interesse = [
+        "Total de candidatos",
+        "Aguardando análise",
+        "Eliminados",
+        "Reclassificados",
+        "Contratados",
+        "Documentos analisados",
+        "Convocados"
+    ]
     # Cria um gráfico separado para cada município
     for municipio, df_mun in dados_municipios.items():
         if not df_mun.empty:
@@ -76,10 +86,7 @@ with aba1:
             # Soma apenas dentro do próprio município
             soma_municipio = df_mun[colunas_interesse].sum().reset_index()
             soma_municipio.columns = ["Indicador", "Quantidade"]
-            
-            # Exibe tabela resumo
-            st.dataframe(soma_municipio, use_container_width=True)
-            
+                     
             # Cria o gráfico de barras
             fig = px.bar(
                 soma_municipio,
