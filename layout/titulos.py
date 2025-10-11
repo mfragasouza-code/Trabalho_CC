@@ -64,7 +64,7 @@ aba1, aba2, aba3 = st.tabs([
 with aba1:
     st.header("📊 Visão Geral dos Indicadores")
     st.write(
-        "Nesta aba, você visualiza o total dos principais indicadores de **cada município**, "
+        "Nesta aba, você visualiza o total dos principais indicadores de contratação de professores em designação temporária de **cada município**, "
         "além de uma tabela descritiva gerada automaticamente com o método `describe()`."
     )
 
@@ -117,12 +117,13 @@ with aba2:
 
     colunas_interesse = [
         "Total de candidatos",
-        "Aguardando análise",
-        "Eliminados",
-        "Reclassificados",
-        "Contratados",
+        "Convocados",
         "Documentos analisados",
-        "Convocados"
+        "Aguardando análise",
+        "Reclassificados",
+        "Eliminados",
+        "Contratados"
+
     ]
 
     # 1️⃣ Unir todas as bases de municípios em um único DataFrame
