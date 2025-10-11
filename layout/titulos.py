@@ -31,10 +31,10 @@ def carregar_dados(caminho_arquivo):
 @st.cache_data
 def carregar_dados():
     # Leitura dos 4 arquivos locais
-    vitoria = pd.read_csv("vitoria.csv", sep=";", encoding="utf-8")
-    serra = pd.read_csv("serra.csv", sep=";", encoding="utf-8")
-    fundao = pd.read_csv("fundao.csv", sep=";", encoding="utf-8")
-    santa_teresa = pd.read_csv("santa_teresa.csv", sep=";", encoding="utf-8")
+    vitoria = pd.read_excel("vitoria.xls", sep=";", encoding="utf-8")
+    serra = pd.read_excel("serra.xls", sep=";", encoding="utf-8")
+    fundao = pd.read_excel("fundao.xls", sep=";", encoding="utf-8")
+    santa_teresa = pd.read_excel("santa_teresa.xls", sep=";", encoding="utf-8")
 
     # Adiciona uma coluna identificando o município (caso não exista)
     vitoria["Município"] = "Vitória"
