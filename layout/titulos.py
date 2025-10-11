@@ -68,17 +68,6 @@ with aba1:
         "mostrados individualmente em gráficos de barras."
     )
 
-    # Lista das colunas de interesse
-    colunas_interesse = [
-        "Total de candidatos",
-        "Aguardando análise",
-        "Eliminados",
-        "Reclassificados",
-        "Contratados",
-        "Documentos analisados",
-        "Convocados"
-    ]
-
     # Cria um gráfico separado para cada município
     for municipio, df_mun in dados_municipios.items():
         if not df_mun.empty:
