@@ -88,7 +88,7 @@ def exibir_edital(edital_numero):
         return
 
     # Criar abas
-    aba_geral, aba_barras, aba_pizza = st.tabs(["📋 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos de Pizza"])
+    aba_geral, aba_barras, aba_pizza = st.tabs(["📋 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Muncípio/Disciplina"])
 
     # ------------------------------------------------------------
     # ABA 1: VISÃO GERAL
