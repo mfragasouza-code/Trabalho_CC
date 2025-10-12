@@ -134,20 +134,31 @@ def exibir_edital(edital_numero):
 
 
     # ------------------------------------------------------------
-    # ABA 2: GRÁFICOS COMPARATIVOS ENTRE MUNICÍPIOS
+    # ABA 2: GRÁFICOS COMPARATIVOS ENTRE AS DISCIPLINAS 
     # ------------------------------------------------------------
     with aba_barras:
-        st.subheader("📊 Comparativo de Indicadores Entre Municípios")
-        for municipio, df in dados_edital.items():
-            st.markdown(f"### {municipio}")
-            fig = px.bar(
-                df,
-                x="Disciplina",
-                y=["Convocados", "Eliminados", "Reclassificados", "Contratados"],
-                barmode="group",
-                title=f"{municipio} - Edital {edital_numero}/2024"
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        st.subheader("📊 Comparativo de Indicadores Entre as Disciplinas do Município")
+    
+        if not dados_edital:
+            st.warning("⚠️ Nenhum dado carregado para gerar os gráficos.")
+        else:
+            municipios_disponiveis = list(dados_edital.keys())
+            municipio_escolhido = st.selectbox("Selecione o município para visualizar:", municipios_disponiveis)
+    
+            if municipio_escolhido:
+                df = dados_edital[municipio_escolhido]
+    
+                try:
+                    fig = px.bar(
+                        df,
+                        x="Disciplina",
+                        y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
+                        barmode="group",
+                        title=f"{municipio_escolhido} - Edital {edital}/2024"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Erro ao gerar gráfico para {municipio_escolhido}: {e}")
 
     # ------------------------------------------------------------
     # ABA 3: GRÁFICOS DE PIZZA
@@ -159,7 +170,7 @@ def exibir_edital(edital_numero):
                 st.markdown(f"### {municipio}")
                 for _, linha in df.iterrows():
                     disciplina = linha["Disciplina"]
-                    valores = linha[["Convocados", "Eliminados", "Reclassificados"]]  # sem "Documentos analisados"
+                    valores = linha[["Aguardando análise", "Eliminados", "Reclassificados","Contratados"]]  # sem "Documentos analisados"
                     fig_pizza = px.pie(
                         values=valores.values,
                         names=valores.index,
