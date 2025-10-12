@@ -94,7 +94,7 @@ def exibir_edital(edital_numero):
     # ABA 1: VISÃO GERAL
     # ------------------------------------------------------------
     with aba_geral:
-        st.subheader("📈 Somatório dos Indicadores por Município")
+        st.subheader("📈 Indicadores Globais por Município")
         indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
 
         resumo = []
@@ -165,7 +165,7 @@ def exibir_edital(edital_numero):
     # ABA 3: GRÁFICOS DE PIZZA + TAXA DE NÃO RESPOSTA
     # ------------------------------------------------------------
     with aba_pizza:
-        st.subheader("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
+        st.subheader("🥧Indicadores por Disciplina e Município")
 
         municipios_disponiveis = list(dados_edital.keys())
         municipio_escolhido_exib = st.selectbox(
