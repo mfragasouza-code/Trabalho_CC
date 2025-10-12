@@ -1,181 +1,171 @@
+# ------------------------------------------------------------
+# APP STREAMLIT - INDICADORES POR MUNICÍPIO E DISCIPLINA
+# ------------------------------------------------------------
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
 
 # ------------------------------------------------------------
-# CONFIGURAÇÕES GERAIS
+# CONFIGURAÇÕES INICIAIS
 # ------------------------------------------------------------
-st.set_page_config(
-    page_title="Painel de Indicadores - Editais 2024",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Indicadores - Editais 40 e 42/2024", layout="wide")
+
+st.title("📊 Indicadores dos Editais 40/2024 e 42/2024")
+st.markdown("Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.")
+
+# ------------------------------------------------------------
+# FUNÇÃO PARA CARREGAR OS DADOS
+# ------------------------------------------------------------
+def carregar_dados():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    arquivos = {
+        "Vitória 40": os.path.join(BASE_DIR, "vitoria_40.xlsx"),
+        "Serra 40": os.path.join(BASE_DIR, "serra_40.xlsx"),
+        "Fundão 40": os.path.join(BASE_DIR, "fundao_40.xlsx"),
+        "Santa Teresa 40": os.path.join(BASE_DIR, "santa_teresa_40.xlsx"),
+        "Vitória 42": os.path.join(BASE_DIR, "vitoria_42.xlsx"),
+        "Serra 42": os.path.join(BASE_DIR, "serra_42.xlsx"),
+        "Fundão 42": os.path.join(BASE_DIR, "fundao_42.xlsx"),
+        "Santa Teresa 42": os.path.join(BASE_DIR, "santa_teresa_42.xlsx"),
+    }
+
+    dados = {}
+    for nome, caminho in arquivos.items():
+        if os.path.exists(caminho):
+            dados[nome] = pd.read_excel(caminho)
+        else:
+            print(f"⚠️ Arquivo não encontrado: {caminho}")
+    return dados
+
+
+# ------------------------------------------------------------
+# CARREGAMENTO DOS DADOS
+# ------------------------------------------------------------
+dados_municipios = carregar_dados()
 
 # ------------------------------------------------------------
 # MENU LATERAL
 # ------------------------------------------------------------
-st.sidebar.title("📁 Navegação")
+st.sidebar.title("📁 Menu de Navegação")
 pagina = st.sidebar.radio(
-    "Selecione uma opção:",
-    ["Página Inicial", "Edital 40/2024", "Edital 42/2024"]
+    "Selecione a página:",
+    ("Página Inicial", "Edital 40/2024", "Edital 42/2024")
 )
-
-# ------------------------------------------------------------
-# FUNÇÃO PARA CARREGAR DADOS
-# ------------------------------------------------------------
-@st.cache_data
-def carregar_dados(edital):
-    """
-    Carrega as bases de dados conforme o edital escolhido.
-    Cada edital tem seus próprios arquivos Excel.
-    """
-    try:
-        if edital == "40/2024":
-            vitoria = pd.read_excel("vitoria_40.xlsx")
-            serra = pd.read_excel("serra_40.xlsx")
-            fundao = pd.read_excel("fundao_40.xlsx")
-            santa_teresa = pd.read_excel("santa_teresa_40.xlsx")
-        elif edital == "42/2024":
-            vitoria = pd.read_excel("vitoria_42.xlsx")
-            serra = pd.read_excel("serra_42.xlsx")
-            fundao = pd.read_excel("fundao_42.xlsx")
-            santa_teresa = pd.read_excel("santa_teresa_42.xlsx")
-        else:
-            return {}
-
-        return {
-            "Vitória": vitoria,
-            "Serra": serra,
-            "Fundão": fundao,
-            "Santa Teresa": santa_teresa
-        }
-    except FileNotFoundError:
-        st.error("⚠️ Alguns arquivos de dados não foram encontrados no diretório.")
-        return {}
 
 # ------------------------------------------------------------
 # PÁGINA INICIAL
 # ------------------------------------------------------------
 if pagina == "Página Inicial":
-    st.title("🏠 Painel de Acompanhamento dos Editais 2024")
+    st.header("🏠 Página Inicial")
     st.markdown("""
-    Bem-vindo ao **Painel de Indicadores** dos processos seletivos do Magistério 2024.
-
-    Este painel foi desenvolvido para apresentar informações comparativas entre os 
-    **Editais 40/2024** e **42/2024**, com indicadores detalhados por município e por disciplina.
-
-    ---
-    **📊 Seções disponíveis:**
-    - **Página Inicial**: visão geral e introdução.
-    - **Edital 40/2024**: informações, tabelas e gráficos do primeiro edital.
-    - **Edital 42/2024**: informações, tabelas e gráficos do segundo edital.
-
-    ---
-    Use o menu lateral para navegar.
+    Este painel apresenta os **indicadores dos editais 40/2024 e 42/2024**,
+    organizados por **município** e **disciplina**.  
+    Utilize o menu lateral para navegar entre os editais e visualizar os gráficos.
     """)
 
 # ------------------------------------------------------------
-# FUNÇÃO AUXILIAR PARA GRÁFICOS DE BARRAS
+# FUNÇÃO PARA EXIBIR OS DADOS DE UM EDITAL
 # ------------------------------------------------------------
-def graficos_indicadores(df, municipio):
-    colunas = [
-        "Total de candidatos",
-        "Aguardando análise",
-        "Eliminados",
-        "Reclassificados",
-        "Contratados",
-        "Documentos analisados",
-        "Convocados"
-    ]
-    colunas_presentes = [c for c in colunas if c in df.columns]
+def exibir_edital(edital_numero):
+    st.header(f"📘 Indicadores - Edital {edital_numero}/2024")
+    st.markdown(f"Análise dos indicadores do **Edital {edital_numero}/2024**, por município e disciplina.")
 
-    if len(colunas_presentes) > 1:
-        df_melt = df.melt(
-            id_vars=["Disciplina"] if "Disciplina" in df.columns else None,
-            value_vars=colunas_presentes,
-            var_name="Indicador",
-            value_name="Quantidade"
-        )
+    # Selecionar os dados do edital
+    dados_edital = {k: v for k, v in dados_municipios.items() if k.endswith(str(edital_numero))}
 
-        fig = px.bar(
-            df_melt,
-            x="Indicador",
-            y="Quantidade",
-            color="Indicador",
-            title=f"Indicadores Gerais - {municipio}",
-            text_auto=True
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-# ------------------------------------------------------------
-# TEMPLATE PARA EDITAIS
-# ------------------------------------------------------------
-def mostrar_edital(edital, titulo):
-    st.title(f"📘 Indicadores - Edital {edital}")
-    st.markdown(f"Análise dos indicadores do **Edital {edital}**, por município e disciplina.")
-
-    dados_municipios = carregar_dados(edital)
-
-    if not dados_municipios:
+    if not dados_edital:
         st.warning("⚠️ Nenhum dado carregado. Verifique os arquivos Excel.")
         return
 
-    # Abas internas
-    abas = st.tabs(["📋 Visão Geral", "📊 Gráficos Comparativos", "📈 Gráficos por Disciplina"])
+    # Verificar se algum arquivo está faltando
+    municipios_faltando = [m for m in ["Vitória", "Serra", "Fundão", "Santa Teresa"] if f"{m} {edital_numero}" not in dados_edital]
+    if municipios_faltando:
+        st.error(f"🚨 Alguns arquivos de dados não foram encontrados: {', '.join(municipios_faltando)}")
+        return
 
-    # --------------------------------------------------------
-    # ABA 1 - VISÃO GERAL
-    # --------------------------------------------------------
-    with abas[0]:
-        st.subheader("📋 Tabelas Resumidas por Município")
-        for municipio, df in dados_municipios.items():
-            st.markdown(f"### 🏫 {municipio}")
-            st.dataframe(df.head())
+    # Criar abas
+    aba_geral, aba_barras, aba_pizza = st.tabs(["📋 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos de Pizza"])
 
-    # --------------------------------------------------------
-    # ABA 2 - GRÁFICOS COMPARATIVOS
-    # --------------------------------------------------------
-    with abas[1]:
-        st.subheader("📊 Gráficos de Indicadores Gerais")
-        for municipio, df in dados_municipios.items():
-            st.markdown(f"### 🏙️ {municipio}")
-            graficos_indicadores(df, municipio)
+    # ------------------------------------------------------------
+    # ABA 1: VISÃO GERAL
+    # ------------------------------------------------------------
+    with aba_geral:
+        st.subheader("📋 Tabela Descritiva por Município")
+        for municipio, df in dados_edital.items():
+            st.markdown(f"### 📍 {municipio}")
+            st.dataframe(df.describe(include='all'))
 
-    # --------------------------------------------------------
-    # ABA 3 - GRÁFICOS POR DISCIPLINA
-    # --------------------------------------------------------
-    with abas[2]:
-        st.subheader("📈 Distribuição por Disciplina")
-        for municipio, df in dados_municipios.items():
-            st.markdown(f"### 🏫 {municipio}")
+        # Somatório por município
+        st.subheader("📈 Somatório dos Indicadores por Município")
+        indicadores = [
+            "Total de candidatos", "Aguardando análise", "Eliminados",
+            "Reclassificados", "Contratados", "Documentos analisados", "Convocados"
+        ]
 
-            # Gráfico de pizza - Documentos analisados
-            if {"Disciplina", "Documentos analisados"}.issubset(df.columns):
-                fig_pie = px.pie(
-                    df,
-                    values="Documentos analisados",
-                    names="Disciplina",
-                    title=f"Documentos Analisados - {municipio}"
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
+        resumo = []
+        for municipio, df in dados_edital.items():
+            soma = df[indicadores].sum(numeric_only=True)
+            soma["Município"] = municipio
+            resumo.append(soma)
 
-            # Gráfico de barras - Convocados x Contratados
-            if {"Disciplina", "Convocados", "Contratados"}.issubset(df.columns):
-                fig_bar = px.bar(
-                    df,
-                    x="Disciplina",
-                    y=["Convocados", "Contratados"],
-                    barmode="group",
-                    title=f"Convocados vs Contratados - {municipio}",
-                    text_auto=True
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
+        df_resumo = pd.DataFrame(resumo)
+        fig_bar = px.bar(
+            df_resumo.melt(id_vars="Município", var_name="Indicador", value_name="Total"),
+            x="Município", y="Total", color="Indicador",
+            title=f"Comparativo de Indicadores - Edital {edital_numero}/2024"
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    # ------------------------------------------------------------
+    # ABA 2: GRÁFICOS COMPARATIVOS ENTRE MUNICÍPIOS
+    # ------------------------------------------------------------
+    with aba_barras:
+        st.subheader("📊 Comparativo de Indicadores Entre Municípios")
+        for municipio, df in dados_edital.items():
+            st.markdown(f"### {municipio}")
+            fig = px.bar(
+                df,
+                x="Disciplina",
+                y=["Convocados", "Eliminados", "Reclassificados", "Contratados"],
+                barmode="group",
+                title=f"{municipio} - Edital {edital_numero}/2024"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+    # ------------------------------------------------------------
+    # ABA 3: GRÁFICOS DE PIZZA
+    # ------------------------------------------------------------
+    with aba_pizza:
+        st.subheader("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
+        for municipio, df in dados_edital.items():
+            if not df.empty:
+                st.markdown(f"### {municipio}")
+                for _, linha in df.iterrows():
+                    disciplina = linha["Disciplina"]
+                    valores = linha[["Convocados", "Eliminados", "Reclassificados"]]  # sem "Documentos analisados"
+                    fig_pizza = px.pie(
+                        values=valores.values,
+                        names=valores.index,
+                        title=f"{disciplina} - {municipio}"
+                    )
+                    total = linha["Total de candidatos"]
+                    documentos = linha["Documentos analisados"]
+                    convocados = linha["Convocados"]
+
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.plotly_chart(fig_pizza, use_container_width=True)
+                    with col2:
+                        st.markdown(f"**Total de candidatos:** {total}")
+                        st.markdown(f"**Documentos analisados:** {documentos}")
+                        st.markdown(f"**Convocados:** {convocados}")
 
 # ------------------------------------------------------------
-# EXECUÇÃO DAS PÁGINAS DOS EDITAIS
+# CHAMADA DE CADA EDITAL
 # ------------------------------------------------------------
 if pagina == "Edital 40/2024":
-    mostrar_edital("40/2024", "Edital 40/2024")
-
+    exibir_edital(40)
 elif pagina == "Edital 42/2024":
-    mostrar_edital("42/2024", "Edital 42/2024")
+    exibir_edital(42)
