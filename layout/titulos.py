@@ -175,32 +175,67 @@ def exibir_edital(edital_numero):
 
 
     # ------------------------------------------------------------
-    # ABA 3: GRÁFICOS DE PIZZA
-    # ------------------------------------------------------------
-    with aba_pizza:
-        st.subheader("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
-        for municipio, df in dados_edital.items():
-            if not df.empty:
-                st.markdown(f"### {municipio}")
-                for _, linha in df.iterrows():
-                    disciplina = linha["Disciplina"]
-                    valores = linha[["Aguardando análise", "Eliminados", "Reclassificados","Contratados"]]  # sem "Documentos analisados"
-                    fig_pizza = px.pie(
-                        values=valores.values,
-                        names=valores.index,
-                        title=f"{disciplina} - {municipio}"
-                    )
-                    total = linha["Total de candidatos"]
-                    documentos = linha["Documentos analisados"]
-                    convocados = linha["Convocados"]
+# ABA 3: GRÁFICOS DE PIZZA
+# ------------------------------------------------------------
+with aba_pizza:
+    st.subheader("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
 
-                    col1, col2 = st.columns([3, 1])
-                    with col1:
-                        st.plotly_chart(fig_pizza, use_container_width=True)
-                    with col2:
-                        st.markdown(f"**Total de candidatos:** {total}")
-                        st.markdown(f"**Documentos analisados:** {documentos}")
-                        st.markdown(f"**Convocados:** {convocados}")
+    # Filtro de município
+    municipios_disponiveis = list(dados_edital.keys())
+    municipio_escolhido_exib = st.selectbox("Selecione o município:", municipios_disponiveis)
+
+    if municipio_escolhido_exib:
+        df = dados_edital[municipio_escolhido_exib]
+
+        # Filtro de disciplina
+        disciplinas_disponiveis = df["Disciplina"].unique().tolist()
+        disciplina_escolhida = st.selectbox("Selecione a disciplina:", disciplinas_disponiveis)
+
+        if disciplina_escolhida:
+            linha = df[df["Disciplina"] == disciplina_escolhida].iloc[0]
+
+            # Valores para o gráfico
+            valores = linha[["Aguardando análise", "Eliminados", "Reclassificados", "Contratados"]]
+
+            # Cores padronizadas
+            cores_padrao = {
+                "Aguardando análise": "#FFCC00",  # amarelo
+                "Eliminados": "#FF4C4C",          # vermelho
+                "Reclassificados": "#0073E6",     # azul
+                "Contratados": "#00B050"          # verde
+            }
+
+            # Geração do gráfico de pizza
+            fig_pizza = px.pie(
+                values=valores.values,
+                names=valores.index,
+                title=f"{disciplina_escolhida} - {municipio_escolhido_exib} ({edital_numero}/2024)",
+                color=valores.index,
+                color_discrete_map=cores_padrao
+            )
+
+            # Indicadores adicionais
+            total_candidatos = linha["Total de candidatos"]
+            documentos = linha["Documentos analisados"]
+            convocados = linha["Convocados"]
+            aguardando = linha["Aguardando análise"]
+
+            # ✅ Cálculo da Taxa de Não Resposta
+            if convocados > 0:
+                taxa_nao_resposta = ((convocados - (documentos + aguardando)) / convocados) * 100
+            else:
+                taxa_nao_resposta = 0
+
+            # Exibição
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.plotly_chart(fig_pizza, use_container_width=True)
+            with col2:
+                st.markdown(f"**Total de candidatos:** {total_candidatos}")
+                st.markdown(f"**Documentos analisados:** {documentos}")
+                st.markdown(f"**Convocados:** {convocados}")
+                st.markdown(f"**Aguardando análise:** {aguardando}")
+                st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
 
 # ------------------------------------------------------------
 # CHAMADA DE CADA EDITAL
