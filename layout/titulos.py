@@ -154,7 +154,7 @@ def exibir_edital(edital_numero):
                         x="Disciplina",
                         y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
                         barmode="group",
-                        title=f"{municipio_escolhido} - Edital {edital}/2024"
+                        title=f"{municipio_escolhido} - Edital {edital_numero}/2024""
                     )
                     st.plotly_chart(fig, use_container_width=True)
                 except Exception as e:
