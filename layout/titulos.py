@@ -133,7 +133,7 @@ def exibir_edital(edital_numero):
             st.dataframe(df)
 
 
-    # ------------------------------------------------------------
+        # ------------------------------------------------------------
     # ABA 2: GRÁFICOS COMPARATIVOS ENTRE AS DISCIPLINAS 
     # ------------------------------------------------------------
     with aba_barras:
@@ -142,23 +142,37 @@ def exibir_edital(edital_numero):
         if not dados_edital:
             st.warning("⚠️ Nenhum dado carregado para gerar os gráficos.")
         else:
-            municipios_disponiveis = list(dados_edital.keys())
-            municipio_escolhido = st.selectbox("Selecione o município para visualizar:", municipios_disponiveis)
-    
-            if municipio_escolhido:
-                df = dados_edital[municipio_escolhido]
-    
+            # Dados_edital tem chaves como "Vitória 40", "Serra 40", etc.
+            # Vamos mostrar no selectbox só o nome do município (sem o sufixo do edital)
+            cidades_chave = list(dados_edital.keys())  # ex: ["Vitória 40", "Serra 40", ...]
+            cidades_exibicao = [c.replace(f" {edital_numero}", "") for c in cidades_chave]  # ex: ["Vitória","Serra",...]
+
+            # Map de exib -> chave
+            map_exib_to_chave = {exib: chave for exib, chave in zip(cidades_exibicao, cidades_chave)}
+
+            municipio_escolhido_exib = st.selectbox(
+                "Selecione o município para visualizar:",
+                cidades_exibicao,
+                key=f"select_municipio_barras_{edital_numero}"
+            )
+
+            if municipio_escolhido_exib:
+                # recupera a chave original (com sufixo do edital)
+                municipio_chave = map_exib_to_chave[municipio_escolhido_exib]
+                df = dados_edital[municipio_chave]
+
                 try:
                     fig = px.bar(
                         df,
                         x="Disciplina",
                         y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
                         barmode="group",
-                        title=f"{municipio_escolhido} - Edital {edital_numero}/2024""
+                        title=f"{municipio_escolhido_exib} - Edital {edital_numero}/2024"
                     )
                     st.plotly_chart(fig, use_container_width=True)
                 except Exception as e:
-                    st.error(f"Erro ao gerar gráfico para {municipio_escolhido}: {e}")
+                    st.error(f"Erro ao gerar gráfico para {municipio_escolhido_exib}: {e}")
+
 
     # ------------------------------------------------------------
     # ABA 3: GRÁFICOS DE PIZZA
