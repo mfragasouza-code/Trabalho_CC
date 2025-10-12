@@ -13,7 +13,7 @@ st.set_page_config(page_title="Indicadores - Editais 40 e 42/2024", layout="wide
 
 st.title("📊 Indicadores dos Editais 40/2024 e 42/2024")
 st.markdown("Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.")
-st.markdown("**OBSERVAÇÃO**: NO MOMENTO A BASE DE DADOS É A MESMA NOS 2 (DOIS) EDITAIS E NOS 4 (QUATRO MUNICÍPIOS) ENQUANTO ESTAMOS CONSTRUINDO A ESTRUTURA DO MVP.")
+st.markdown("**OBSERVAÇÃO:** No momento a base de dados é a mesma nos 2 (dois) editais e nos 4 (quatro) municípios enquanto estamos construindo a estrutura do MVP.")
 
 # ------------------------------------------------------------
 # FUNÇÃO PARA CARREGAR OS DADOS
@@ -66,6 +66,7 @@ if pagina == "Página Inicial":
     Utilize o menu lateral para navegar entre os editais e visualizar os gráficos.
     """)
 
+
 # ------------------------------------------------------------
 # FUNÇÃO PARA EXIBIR OS DADOS DE UM EDITAL
 # ------------------------------------------------------------
@@ -93,11 +94,8 @@ def exibir_edital(edital_numero):
     # ABA 1: VISÃO GERAL
     # ------------------------------------------------------------
     with aba_geral:
-            # Somatório por município
         st.subheader("📈 Somatório dos Indicadores por Município")
-        indicadores = [
-             "Aguardando análise", "Reclassificados", "Eliminados", "Contratados"
-        ]
+        indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
 
         resumo = []
         for municipio, df in dados_edital.items():
@@ -113,99 +111,90 @@ def exibir_edital(edital_numero):
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
-        # -------------------------------
-        # 📊 Selecionar município
-        # -------------------------------
+        # 📋 Selecionar município
         st.subheader("📋 Tabela Descritiva por Município")
-
         municipios_disponiveis = list(dados_edital.keys())
-        municipio_escolhido = st.selectbox("Selecione o município:", municipios_disponiveis)
+
+        municipio_escolhido = st.selectbox(
+            "Selecione o município:",
+            municipios_disponiveis,
+            key=f"select_municipio_geral_{edital_numero}"
+        )
 
         if municipio_escolhido:
             df = dados_edital[municipio_escolhido]
             st.markdown(f"### 📍 {municipio_escolhido}")
             st.dataframe(df.describe(include='all'))
 
-        # -------------------------------
-        # 🔍 Visualização dos dados brutos
-        # -------------------------------
-        with st.expander("📄 Ver dados completos do município selecionado"):
-            st.dataframe(df)
-
-
-        # ------------------------------------------------------------
-        # ABA 2: GRÁFICOS COMPARATIVOS ENTRE AS DISCIPLINAS 
-        # ------------------------------------------------------------
-        with aba_barras:
-            st.subheader("📊 Comparativo de Indicadores Entre as Disciplinas do Município")
-        
-            if not dados_edital:
-                st.warning("⚠️ Nenhum dado carregado para gerar os gráficos.")
-            else:
-                # Dados_edital tem chaves como "Vitória 40", "Serra 40", etc.
-                # Vamos mostrar no selectbox só o nome do município (sem o sufixo do edital)
-                cidades_chave = list(dados_edital.keys())  # ex: ["Vitória 40", "Serra 40", ...]
-                cidades_exibicao = [c.replace(f" {edital_numero}", "") for c in cidades_chave]  # ex: ["Vitória","Serra",...]
-    
-                # Map de exib -> chave
-                map_exib_to_chave = {exib: chave for exib, chave in zip(cidades_exibicao, cidades_chave)}
-    
-                municipio_escolhido_exib = st.selectbox(
-                    "Selecione o município para visualizar:",
-                    cidades_exibicao,
-                    key=f"select_municipio_barras_{edital_numero}"
-                )
-    
-                if municipio_escolhido_exib:
-                    # recupera a chave original (com sufixo do edital)
-                    municipio_chave = map_exib_to_chave[municipio_escolhido_exib]
-                    df = dados_edital[municipio_chave]
-    
-                    try:
-                        fig = px.bar(
-                            df,
-                            x="Disciplina",
-                            y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
-                            barmode="group",
-                            title=f"{municipio_escolhido_exib} - Edital {edital_numero}/2024"
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                    except Exception as e:
-                        st.error(f"Erro ao gerar gráfico para {municipio_escolhido_exib}: {e}")
-
+            with st.expander("📄 Ver dados completos do município selecionado"):
+                st.dataframe(df)
 
     # ------------------------------------------------------------
-    # ABA 3: GRÁFICOS DE PIZZA
+    # ABA 2: GRÁFICOS COMPARATIVOS
+    # ------------------------------------------------------------
+    with aba_barras:
+        st.subheader("📊 Comparativo de Indicadores Entre as Disciplinas do Município")
+
+        cidades_chave = list(dados_edital.keys())
+        cidades_exibicao = [c.replace(f" {edital_numero}", "") for c in cidades_chave]
+        map_exib_to_chave = {exib: chave for exib, chave in zip(cidades_exibicao, cidades_chave)}
+
+        municipio_escolhido_exib = st.selectbox(
+            "Selecione o município para visualizar:",
+            cidades_exibicao,
+            key=f"select_municipio_barras_{edital_numero}"
+        )
+
+        if municipio_escolhido_exib:
+            municipio_chave = map_exib_to_chave[municipio_escolhido_exib]
+            df = dados_edital[municipio_chave]
+
+            try:
+                fig = px.bar(
+                    df,
+                    x="Disciplina",
+                    y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
+                    barmode="group",
+                    title=f"{municipio_escolhido_exib} - Edital {edital_numero}/2024"
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.error(f"Erro ao gerar gráfico para {municipio_escolhido_exib}: {e}")
+
+    # ------------------------------------------------------------
+    # ABA 3: GRÁFICOS DE PIZZA + TAXA DE NÃO RESPOSTA
     # ------------------------------------------------------------
     with aba_pizza:
         st.subheader("🥧 Gráficos de Pizza - Indicadores por Disciplina e Município")
-    
-        # Filtro de município
+
         municipios_disponiveis = list(dados_edital.keys())
-        municipio_escolhido_exib = st.selectbox("Selecione o município:", municipios_disponiveis)
-    
+        municipio_escolhido_exib = st.selectbox(
+            "Selecione o município:",
+            municipios_disponiveis,
+            key=f"select_municipio_pizza_{edital_numero}"
+        )
+
         if municipio_escolhido_exib:
             df = dados_edital[municipio_escolhido_exib]
-    
-            # Filtro de disciplina
             disciplinas_disponiveis = df["Disciplina"].unique().tolist()
-            disciplina_escolhida = st.selectbox("Selecione a disciplina:", disciplinas_disponiveis)
-    
+
+            disciplina_escolhida = st.selectbox(
+                "Selecione a disciplina:",
+                disciplinas_disponiveis,
+                key=f"select_disciplina_pizza_{edital_numero}"
+            )
+
             if disciplina_escolhida:
                 linha = df[df["Disciplina"] == disciplina_escolhida].iloc[0]
-    
-                # Valores para o gráfico
                 valores = linha[["Aguardando análise", "Eliminados", "Reclassificados", "Contratados"]]
-    
-                # Cores padronizadas
+
                 cores_padrao = {
-                    "Aguardando análise": "#FFCC00",  # amarelo
-                    "Eliminados": "#FF4C4C",          # vermelho
-                    "Reclassificados": "#0073E6",     # azul
-                    "Contratados": "#00B050"          # verde
+                    "Aguardando análise": "#FFCC00",
+                    "Eliminados": "#FF4C4C",
+                    "Reclassificados": "#0073E6",
+                    "Contratados": "#00B050"
                 }
-    
-                # Geração do gráfico de pizza
+
                 fig_pizza = px.pie(
                     values=valores.values,
                     names=valores.index,
@@ -213,20 +202,17 @@ def exibir_edital(edital_numero):
                     color=valores.index,
                     color_discrete_map=cores_padrao
                 )
-    
-                # Indicadores adicionais
+
                 total_candidatos = linha["Total de candidatos"]
                 documentos = linha["Documentos analisados"]
                 convocados = linha["Convocados"]
                 aguardando = linha["Aguardando análise"]
-    
-                # ✅ Cálculo da Taxa de Não Resposta
+
                 if convocados > 0:
                     taxa_nao_resposta = ((convocados - (documentos + aguardando)) / convocados) * 100
                 else:
                     taxa_nao_resposta = 0
-    
-                # Exibição
+
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     st.plotly_chart(fig_pizza, use_container_width=True)
