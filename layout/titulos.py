@@ -204,9 +204,9 @@ def exibir_edital(edital_numero):
                 )
 
                 total_candidatos = linha["Total de candidatos"]
-                documentos = linha["Documentos analisados"]
                 convocados = linha["Convocados"]
                 aguardando = linha["Aguardando análise"]
+                documentos = linha["Documentos analisados"]
 
                 if convocados > 0:
                     taxa_nao_resposta = ((convocados - (documentos + aguardando)) / convocados) * 100
