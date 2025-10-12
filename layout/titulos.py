@@ -92,16 +92,10 @@ def exibir_edital(edital_numero):
     # ABA 1: VISÃO GERAL
     # ------------------------------------------------------------
     with aba_geral:
-        st.subheader("📋 Tabela Descritiva por Município")
-        for municipio, df in dados_edital.items():
-            st.markdown(f"### 📍 {municipio}")
-            st.dataframe(df.describe(include='all'))
-
-        # Somatório por município
+            # Somatório por município
         st.subheader("📈 Somatório dos Indicadores por Município")
         indicadores = [
-            "Total de candidatos", "Aguardando análise", "Eliminados",
-            "Reclassificados", "Contratados", "Documentos analisados", "Convocados"
+             "Aguardando análise", "Reclassificados", "Eliminados", "Contratados"
         ]
 
         resumo = []
@@ -117,6 +111,26 @@ def exibir_edital(edital_numero):
             title=f"Comparativo de Indicadores - Edital {edital_numero}/2024"
         )
         st.plotly_chart(fig_bar, use_container_width=True)
+
+        # -------------------------------
+        # 📊 Selecionar município
+        # -------------------------------
+        st.subheader("📋 Tabela Descritiva por Município")
+
+        municipios_disponiveis = list(dados_edital.keys())
+        municipio_escolhido = st.selectbox("Selecione o município:", municipios_disponiveis)
+
+        if municipio_escolhido:
+            df = dados_edital[municipio_escolhido]
+            st.markdown(f"### 📍 {municipio_escolhido}")
+            st.dataframe(df.describe(include='all'))
+
+        # -------------------------------
+        # 🔍 Visualização dos dados brutos
+        # -------------------------------
+        with st.expander("📄 Ver dados completos do município selecionado"):
+            st.dataframe(df)
+
 
     # ------------------------------------------------------------
     # ABA 2: GRÁFICOS COMPARATIVOS ENTRE MUNICÍPIOS
