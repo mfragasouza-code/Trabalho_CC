@@ -218,9 +218,9 @@ def exibir_edital(edital_numero):
                     st.plotly_chart(fig_pizza, use_container_width=True)
                 with col2:
                     st.markdown(f"**Total de candidatos:** {total_candidatos}")
-                    st.markdown(f"**Documentos analisados:** {documentos}")
                     st.markdown(f"**Convocados:** {convocados}")
                     st.markdown(f"**Aguardando análise:** {aguardando}")
+                    st.markdown(f"**Documentos analisados:** {documentos}")
                     st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
 
 # ------------------------------------------------------------
