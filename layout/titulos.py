@@ -13,6 +13,7 @@ st.set_page_config(page_title="Indicadores - Editais 40 e 42/2024", layout="wide
 
 st.title("📊 Indicadores dos Editais 40/2024 e 42/2024")
 st.markdown("Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.")
+st.markdown("Por Mirella Fraga")
 st.markdown("**OBSERVAÇÃO:** No momento a base de dados é a mesma nos 2 (dois) editais e nos 4 (quatro) municípios enquanto estamos construindo a estrutura do MVP.")
 
 # ------------------------------------------------------------
