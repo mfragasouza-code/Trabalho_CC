@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # TÍTULO PRINCIPAL
-st.title("📊 Indicadores dos Editais 40/2024 e 42/2024 - SRE Carapina")
+st.title("📊 Indicadores dos Editais 40/2024 e 42/2024 - SRE Carapina - teste")
 st.markdown("""
 Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.  
 Por *Mirella Fraga*  
