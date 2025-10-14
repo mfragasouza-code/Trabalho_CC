@@ -17,9 +17,7 @@ st.set_page_config(
  
 # TÍTULO PRINCIPAL
 st.title("📊 Indicadores dos Editais 40/2024 e 43/2024 - SRE Carapina")
-st.markdown("""
-Análise comparativa por **município** e **disciplina**, com
-base nos indicadores dos processos seletivos. 
+st.markdown("""Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos. 
 Por *Mirella Fraga*  
 **Obs.:** Base de dados temporária e unificada enquanto o
 MVP é desenvolvido.
