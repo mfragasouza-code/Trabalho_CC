@@ -80,7 +80,7 @@ with st.sidebar:
             subpagina = st.radio(
                 "Navegue entre as seções:",
                 ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
-                key="sub_42"
+                key="sub_43"
             )
 
 # ------------------------------------------------------------
