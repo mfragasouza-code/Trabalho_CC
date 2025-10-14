@@ -48,13 +48,24 @@ def carregar_dados():
 dados_municipios = carregar_dados()
 
 # ------------------------------------------------------------
-# MENU LATERAL
+# MENU LATERAL HIERÁRQUICO
 # ------------------------------------------------------------
 st.sidebar.title("📁 Menu de Navegação")
-pagina = st.sidebar.radio(
-    "Selecione a página:",
+
+pagina_principal = st.sidebar.radio(
+    "Selecione a seção:",
     ("Página Inicial", "Edital 40/2024", "Edital 42/2024")
 )
+
+# Submenu (só aparece quando um edital é selecionado)
+if pagina_principal in ["Edital 40/2024", "Edital 42/2024"]:
+    subpagina = st.sidebar.radio(
+        "Subseções:",
+        ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos de Pizza"),
+        key=f"subpagina_{pagina_principal}"
+    )
+else:
+    subpagina = None
 
 # ------------------------------------------------------------
 # PÁGINA INICIAL
