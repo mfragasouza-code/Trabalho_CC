@@ -15,7 +15,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ------------------------------------------------------------
 # TÍTULO PRINCIPAL
+# ------------------------------------------------------------
 st.title("📊 Indicadores dos Editais 40/2024 e 43/2024 - SRE Carapina")
 st.markdown("""
 Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.  
@@ -48,45 +50,50 @@ def carregar_dados():
             print(f"⚠️ Arquivo não encontrado: {caminho}")
     return dados
 
+
 # ------------------------------------------------------------
 # CARREGAMENTO DOS DADOS
 # ------------------------------------------------------------
 dados_municipios = carregar_dados()
 
+
 # ------------------------------------------------------------
-# MENU LATERAL HIERÁRQUICO E COLAPSÁVEL
+# MENU LATERAL HIERÁRQUICO E SINCRONIZADO
 # ------------------------------------------------------------
+if "menu_principal" not in st.session_state:
+    st.session_state["menu_principal"] = "Página Inicial"
+if "subpagina" not in st.session_state:
+    st.session_state["subpagina"] = "📈 Visão Geral"
+
 with st.sidebar:
     st.markdown("## 📁 Menu de Navegação")
     with st.expander("🌍 Selecione o Edital", expanded=True):
         menu_principal = st.radio(
             "Escolha o edital:",
             ("Página Inicial", "Edital 40/2024", "Edital 43/2024"),
-            key="menu_principal"
+            key="menu_principal_radio",
+            index=["Página Inicial", "Edital 40/2024", "Edital 43/2024"].index(st.session_state["menu_principal"])
         )
 
-    # Submenus (aparecem de forma hierárquica)
     subpagina = None
-    if menu_principal == "Edital 40/2024":
-        with st.expander("📘 Edital 40/2024 - Seções", expanded=True):
+    if menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
+        with st.expander(f"📘 {menu_principal} - Seções", expanded=True):
             subpagina = st.radio(
                 "Navegue entre as seções:",
                 ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
-                key="sub_40"
+                key="subpagina_radio",
+                index=["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"].index(st.session_state["subpagina"])
             )
 
-    elif menu_principal == "Edital 43/2024":
-        with st.expander("📗 Edital 43/2024 - Seções", expanded=True):
-            subpagina = st.radio(
-                "Navegue entre as seções:",
-                ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
-                key="sub_43"
-            )
+    st.session_state["menu_principal"] = menu_principal
+    if subpagina:
+        st.session_state["subpagina"] = subpagina
+
 
 # ------------------------------------------------------------
 # PÁGINA INICIAL
 # ------------------------------------------------------------
-if menu_principal == "Página Inicial":
+if st.session_state["menu_principal"] == "Página Inicial":
     st.header("🏠 Página Inicial")
     st.markdown("""
     Bem-vindo ao **Painel Interativo de Indicadores dos Editais 40/2024 e 43/2024** da SRE Carapina.  
@@ -95,16 +102,17 @@ if menu_principal == "Página Inicial":
     - 📊 Gráficos comparativos por disciplina;  
     - 🥧 Distribuições detalhadas por município e disciplina.  
 
-    Use o menu lateral para navegar entre os editais e suas seções.
+    Use o menu lateral ou as abas superiores para navegar.
     """)
+
 
 # ------------------------------------------------------------
 # FUNÇÃO PARA EXIBIR CADA EDITAL
 # ------------------------------------------------------------
-elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
-    numero_edital = 40 if "40" in menu_principal else 43
-    st.header(f"📘 Indicadores - {menu_principal}")
-    st.markdown(f"Análise dos indicadores do **{menu_principal}**, por município e disciplina.")
+elif st.session_state["menu_principal"] in ["Edital 40/2024", "Edital 43/2024"]:
+    numero_edital = 40 if "40" in st.session_state["menu_principal"] else 43
+    st.header(f"📘 Indicadores - {st.session_state['menu_principal']}")
+    st.markdown(f"Análise dos indicadores do **{st.session_state['menu_principal']}**, por município e disciplina.")
 
     # Filtrar dados do edital
     dados_edital = {k: v for k, v in dados_municipios.items() if k.endswith(str(numero_edital))}
@@ -123,7 +131,7 @@ elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
         # VISÃO GERAL
         # ------------------------------------------------------------
         with abas_dict["📈 Visão Geral"]:
-            if subpagina == "📈 Visão Geral" or subpagina is None:
+            if st.session_state["subpagina"] == "📈 Visão Geral":
                 st.subheader("📈 Indicadores Globais por Município")
 
                 indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
@@ -145,7 +153,7 @@ elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
         # GRÁFICOS COMPARATIVOS
         # ------------------------------------------------------------
         with abas_dict["📊 Gráficos Comparativos"]:
-            if subpagina == "📊 Gráficos Comparativos":
+            if st.session_state["subpagina"] == "📊 Gráficos Comparativos":
                 st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
 
                 cidades_chave = list(dados_edital.keys())
@@ -175,7 +183,7 @@ elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
         # GRÁFICOS MUNICÍPIO / DISCIPLINA + TAXA DE NÃO RESPOSTA
         # ------------------------------------------------------------
         with abas_dict["🥧 Gráficos Município/Disciplina"]:
-            if subpagina == "🥧 Gráficos Município/Disciplina":
+            if st.session_state["subpagina"] == "🥧 Gráficos Município/Disciplina":
                 st.subheader("🥧 Indicadores por Disciplina e Município")
 
                 municipios_disponiveis = list(dados_edital.keys())
@@ -223,3 +231,11 @@ elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
                             st.markdown(f"**Aguardando análise:** {aguardando}")
                             st.markdown(f"**Documentos analisados:** {documentos}")
                             st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
+
+# ------------------------------------------------------------
+# SINCRONIZAÇÃO AUTOMÁTICA ENTRE MENU E ABAS
+# ------------------------------------------------------------
+if st.session_state["menu_principal"] in ["Edital 40/2024", "Edital 43/2024"]:
+    for nome, aba in abas_dict.items():
+        if aba and aba.title == st.session_state["subpagina"]:
+            st.session_state["subpagina"] = nome
