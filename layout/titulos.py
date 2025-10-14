@@ -10,13 +10,13 @@ import os
 # CONFIGURAÇÕES INICIAIS
 # ------------------------------------------------------------
 st.set_page_config(
-    page_title="Indicadores - Editais 40 e 42/2024",
+    page_title="Indicadores - Editais 40 e 43/2024",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # TÍTULO PRINCIPAL
-st.title("📊 Indicadores dos Editais 40/2024 e 42/2024 - SRE Carapina")
+st.title("📊 Indicadores dos Editais 40/2024 e 43/2024 - SRE Carapina")
 st.markdown("""
 Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.  
 Por *Mirella Fraga*  
@@ -34,10 +34,10 @@ def carregar_dados():
         "Serra 40": os.path.join(BASE_DIR, "serra_40.xlsx"),
         "Fundão 40": os.path.join(BASE_DIR, "fundao_40.xlsx"),
         "Santa Teresa 40": os.path.join(BASE_DIR, "santa_teresa_40.xlsx"),
-        "Vitória 42": os.path.join(BASE_DIR, "vitoria_42.xlsx"),
-        "Serra 42": os.path.join(BASE_DIR, "serra_42.xlsx"),
-        "Fundão 42": os.path.join(BASE_DIR, "fundao_42.xlsx"),
-        "Santa Teresa 42": os.path.join(BASE_DIR, "santa_teresa_42.xlsx"),
+        "Vitória 43": os.path.join(BASE_DIR, "vitoria_43.xlsx"),
+        "Serra 43": os.path.join(BASE_DIR, "serra_43.xlsx"),
+        "Fundão 43": os.path.join(BASE_DIR, "fundao_43.xlsx"),
+        "Santa Teresa 43": os.path.join(BASE_DIR, "santa_teresa_43.xlsx"),
     }
 
     dados = {}
@@ -61,7 +61,7 @@ with st.sidebar:
     with st.expander("🌍 Selecione o Edital", expanded=True):
         menu_principal = st.radio(
             "Escolha o edital:",
-            ("Página Inicial", "Edital 40/2024", "Edital 42/2024"),
+            ("Página Inicial", "Edital 40/2024", "Edital 43/2024"),
             key="menu_principal"
         )
 
@@ -75,8 +75,8 @@ with st.sidebar:
                 key="sub_40"
             )
 
-    elif menu_principal == "Edital 42/2024":
-        with st.expander("📗 Edital 42/2024 - Seções", expanded=True):
+    elif menu_principal == "Edital 43/2024":
+        with st.expander("📗 Edital 43/2024 - Seções", expanded=True):
             subpagina = st.radio(
                 "Navegue entre as seções:",
                 ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
@@ -89,7 +89,7 @@ with st.sidebar:
 if menu_principal == "Página Inicial":
     st.header("🏠 Página Inicial")
     st.markdown("""
-    Bem-vindo ao **Painel Interativo de Indicadores dos Editais 40/2024 e 42/2024** da SRE Carapina.  
+    Bem-vindo ao **Painel Interativo de Indicadores dos Editais 40/2024 e 43/2024** da SRE Carapina.  
     Aqui você poderá visualizar:
     - 📈 Indicadores gerais por município;  
     - 📊 Gráficos comparativos por disciplina;  
@@ -101,8 +101,8 @@ if menu_principal == "Página Inicial":
 # ------------------------------------------------------------
 # FUNÇÃO PARA EXIBIR CADA EDITAL
 # ------------------------------------------------------------
-elif menu_principal in ["Edital 40/2024", "Edital 42/2024"]:
-    numero_edital = 40 if "40" in menu_principal else 42
+elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
+    numero_edital = 40 if "40" in menu_principal else 43
     st.header(f"📘 Indicadores - {menu_principal}")
     st.markdown(f"Análise dos indicadores do **{menu_principal}**, por município e disciplina.")
 
