@@ -1,168 +1,135 @@
-library(shiny)
-library(readxl)
-library(ggplot2)
-library(dplyr)
+# ------------------------------------------------------------
+# APP STREAMLIT - INDICADORES POR MUNICÍPIO E DISCIPLINA
+# ------------------------------------------------------------
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import os
 
-# Função genérica para criação de gráficos
-criar_grafico <- function(dados, titulo) {
-  ggplot(dados, aes(x = reorder(Categoria, Valor), y = Valor, fill = Categoria)) +
-    geom_col(show.legend = FALSE) +
-    coord_flip() +
-    labs(title = titulo, x = "", y = "Percentual") +
-    theme_minimal(base_size = 14)
-}
-
-# Interface ---------------------------------------------------------
-ui <- fluidPage(
-  titlePanel("Painel de Acompanhamento dos Editais"),
-  
-  sidebarLayout(
-    sidebarPanel(
-      h4("Navegação"),
-      selectInput(
-        "edital", "Selecione o Edital:",
-        choices = c("Edital 40", "Edital 43")
-      ),
-      selectInput(
-        "secao", "Selecione a Seção:",
-        choices = c("Visão geral", "Gráficos comparativos", "Gráficos por município/disciplina")
-      ),
-      width = 3
-    ),
-    
-    mainPanel(
-      # Abas superiores sincronizadas com o menu lateral
-      tabsetPanel(
-        id = "abas",
-        tabPanel("Visão geral", uiOutput("aba_visao_geral")),
-        tabPanel("Gráficos comparativos", uiOutput("aba_graficos_comparativos")),
-        tabPanel("Gráficos por município/disciplina", uiOutput("aba_graficos_municipio"))
-      )
-    )
-  )
+# ------------------------------------------------------------
+# CONFIGURAÇÕES INICIAIS
+# ------------------------------------------------------------
+st.set_page_config(
+    page_title="Indicadores - Editais 40 e 43/2024",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Servidor ---------------------------------------------------------
-server <- function(input, output, session) {
-  
-  # Bases organizadas por edital
-  bases <- reactive({
-    list(
-      "Edital 40" = list(
-        "Vitória 40" = read_excel("vitoria_40.xlsx"),
-        "Serra 40"   = read_excel("serra_40.xlsx"),
-        "Fundão 40"  = read_excel("fundao_40.xlsx"),
-        "Santa Teresa 40" = read_excel("santa_teresa_40.xlsx")
-      ),
-      "Edital 43" = list(
-        "Vitória 43" = read_excel("vitoria_43.xlsx"),
-        "Serra 43"   = read_excel("serra_43.xlsx"),
-        "Fundão 43"  = read_excel("fundao_43.xlsx"),
-        "Santa Teresa 43" = read_excel("santa_teresa_43.xlsx")
-      )
-    )
-  })
-  
-  # 🔁 Sincroniza menu lateral e abas
-  observeEvent(input$secao, {
-    updateTabsetPanel(session, "abas", selected = input$secao)
-  })
-  observeEvent(input$abas, {
-    updateSelectInput(session, "secao", selected = input$abas)
-  })
-  
-  # =================== ABA 1 - VISÃO GERAL =======================
-  output$aba_visao_geral <- renderUI({
-    edital <- input$edital
-    dados_edital <- bases()[[edital]]
-    
-    if (is.null(dados_edital)) return(h4("Carregando dados..."))
-    
-    tagList(
-      h3(paste("Visão Geral -", edital)),
-      lapply(names(dados_edital), function(nome) {
-        plotOutput(outputId = paste0("grafico_visao_", gsub(" ", "_", nome)))
-      })
-    )
-  })
-  
-  # Renderiza gráficos da aba “Visão Geral”
-  observe({
-    edital <- input$edital
-    dados_edital <- bases()[[edital]]
-    if (is.null(dados_edital)) return(NULL)
-    
-    lapply(names(dados_edital), function(nome) {
-      local({
-        nm <- nome
-        output[[paste0("grafico_visao_", gsub(" ", "_", nm))]] <- renderPlot({
-          criar_grafico(dados_edital[[nm]], paste("Resumo geral de", nm))
-        })
-      })
-    })
-  })
-  
-  # =================== ABA 2 - GRÁFICOS COMPARATIVOS =======================
-  output$aba_graficos_comparativos <- renderUI({
-    edital <- input$edital
-    dados_edital <- bases()[[edital]]
-    if (is.null(dados_edital)) return(NULL)
-    
-    tagList(
-      h3(paste("Gráficos Comparativos -", edital)),
-      plotOutput("grafico_comparativo")
-    )
-  })
-  
-  output$grafico_comparativo <- renderPlot({
-    edital <- input$edital
-    dados_edital <- bases()[[edital]]
-    if (is.null(dados_edital)) return(NULL)
-    
-    # Exemplo: comparação de médias de cada município
-    resumo <- do.call(rbind, lapply(names(dados_edital), function(nome) {
-      data.frame(
-        Municipio = nome,
-        Media = mean(dados_edital[[nome]]$Valor, na.rm = TRUE)
-      )
-    }))
-    
-    ggplot(resumo, aes(x = Municipio, y = Media, fill = Municipio)) +
-      geom_col(show.legend = FALSE) +
-      labs(title = paste("Comparativo geral entre municípios -", edital),
-           x = "", y = "Média (%)") +
-      theme_minimal(base_size = 14)
-  })
-  
-  # =================== ABA 3 - MUNICÍPIO / DISCIPLINA =======================
-  output$aba_graficos_municipio <- renderUI({
-    edital <- input$edital
-    dados_edital <- bases()[[edital]]
-    if (is.null(dados_edital)) return(NULL)
-    
-    tagList(
-      h3(paste("Gráficos por Município e Disciplina -", edital)),
-      lapply(names(dados_edital), function(nome) {
-        plotOutput(outputId = paste0("grafico_disc_", gsub(" ", "_", nome)))
-      })
-    )
-  })
-  
-  observe({
-    edital <- input$edital
-    dados_edital <- bases()[[edital]]
-    if (is.null(dados_edital)) return(NULL)
-    
-    lapply(names(dados_edital), function(nome) {
-      local({
-        nm <- nome
-        output[[paste0("grafico_disc_", gsub(" ", "_", nm))]] <- renderPlot({
-          criar_grafico(dados_edital[[nm]], paste("Município e Disciplinas -", nm))
-        })
-      })
-    })
-  })
-}
+st.title("📊 Indicadores dos Editais 40/2024 e 43/2024 - SRE Carapina")
+st.markdown("""
+Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.  
+Por *Mirella Fraga*  
+**Obs.:** Base de dados temporária e unificada enquanto o MVP é desenvolvido.
+""")
 
-# Executa o app
-shinyApp(ui, server)
+# ------------------------------------------------------------
+# FUNÇÃO PARA CARREGAR OS DADOS
+# ------------------------------------------------------------
+def carregar_dados():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    arquivos = {
+        "Vitória 40": os.path.join(BASE_DIR, "vitoria_40.xlsx"),
+        "Serra 40": os.path.join(BASE_DIR, "serra_40.xlsx"),
+        "Fundão 40": os.path.join(BASE_DIR, "fundao_40.xlsx"),
+        "Santa Teresa 40": os.path.join(BASE_DIR, "santa_teresa_40.xlsx"),
+        "Vitória 43": os.path.join(BASE_DIR, "vitoria_43.xlsx"),
+        "Serra 43": os.path.join(BASE_DIR, "serra_43.xlsx"),
+        "Fundão 43": os.path.join(BASE_DIR, "fundao_43.xlsx"),
+        "Santa Teresa 43": os.path.join(BASE_DIR, "santa_teresa_43.xlsx"),
+    }
+
+    dados = {}
+    for nome, caminho in arquivos.items():
+        if os.path.exists(caminho):
+            dados[nome] = pd.read_excel(caminho)
+        else:
+            st.warning(f"⚠️ Arquivo não encontrado: {nome}")
+    return dados
+
+dados_municipios = carregar_dados()
+
+# ------------------------------------------------------------
+# MENU LATERAL E CONTROLE SINCRONIZADO
+# ------------------------------------------------------------
+with st.sidebar:
+    st.markdown("## 📁 Menu de Navegação")
+    edital = st.radio("Selecione o Edital:", ("40", "43"), horizontal=True)
+    aba = st.radio(
+        "Selecione a Seção:",
+        ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina")
+    )
+
+# ------------------------------------------------------------
+# DEFINIR OS DADOS DO EDITAL ESCOLHIDO
+# ------------------------------------------------------------
+dados_edital = {k: v for k, v in dados_municipios.items() if k.endswith(edital)}
+
+if not dados_edital:
+    st.warning("⚠️ Nenhum dado encontrado. Verifique os arquivos Excel.")
+else:
+    st.header(f"📘 Edital {edital}/2024 - Indicadores por Município e Disciplina")
+
+    # Sincronização via abas — UMA ÚNICA AÇÃO
+    abas = st.tabs(["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"])
+    aba_index = ["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"].index(aba)
+
+    with abas[aba_index]:
+        # ------------------------------------------------------------
+        # 📈 VISÃO GERAL
+        # ------------------------------------------------------------
+        if aba == "📈 Visão Geral":
+            st.subheader("📈 Indicadores Globais por Município")
+            indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
+            resumo = []
+            for municipio, df in dados_edital.items():
+                soma = df[indicadores].sum(numeric_only=True)
+                soma["Município"] = municipio.replace(f" {edital}", "")
+                resumo.append(soma)
+
+            df_resumo = pd.DataFrame(resumo)
+            fig_bar = px.bar(
+                df_resumo.melt(id_vars="Município", var_name="Indicador", value_name="Total"),
+                x="Município", y="Total", color="Indicador",
+                title=f"Comparativo de Indicadores - Edital {edital}/2024"
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+        # ------------------------------------------------------------
+        # 📊 GRÁFICOS COMPARATIVOS
+        # ------------------------------------------------------------
+        elif aba == "📊 Gráficos Comparativos":
+            st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
+            municipios = [c.replace(f" {edital}", "") for c in dados_edital.keys()]
+            selecionado = st.selectbox("Selecione o município:", municipios)
+
+            if selecionado:
+                df = dados_edital[f"{selecionado} {edital}"]
+                fig = px.bar(
+                    df,
+                    x="Disciplina",
+                    y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
+                    barmode="group",
+                    title=f"{selecionado} - Edital {edital}/2024"
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+        # ------------------------------------------------------------
+        # 🥧 GRÁFICOS MUNICÍPIO/DISCIPLINA
+        # ------------------------------------------------------------
+        elif aba == "🥧 Gráficos Município/Disciplina":
+            st.subheader("🥧 Indicadores por Disciplina e Município")
+            municipios = [c.replace(f" {edital}", "") for c in dados_edital.keys()]
+            municipio_sel = st.selectbox("Selecione o município:", municipios)
+            if municipio_sel:
+                df = dados_edital[f"{municipio_sel} {edital}"]
+                disciplinas = df["Disciplina"].unique().tolist()
+                disciplina_sel = st.selectbox("Selecione a disciplina:", disciplinas)
+                if disciplina_sel:
+                    linha = df[df["Disciplina"] == disciplina_sel].iloc[0]
+                    valores = linha[["Aguardando análise", "Eliminados", "Reclassificados", "Contratados"]]
+                    fig_pizza = px.pie(
+                        values=valores.values,
+                        names=valores.index,
+                        title=f"{disciplina_sel} - {municipio_sel} ({edital}/2024)"
+                    )
+                    st.plotly_chart(fig_pizza, use_container_width=True)
