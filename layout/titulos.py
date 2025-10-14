@@ -1,18 +1,14 @@
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 # APP STREAMLIT - INDICADORES POR MUNICÍPIO E DISCIPLINA
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
  
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 # CONFIGURAÇÕES INICIAIS
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 st.set_page_config(
    page_title="Indicadores - Editais 40 e 43/2024",
    layout="wide",
@@ -29,10 +25,9 @@ Por *Mirella Fraga* 
 MVP é desenvolvido.
 """)
  
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 # FUNÇÃO PARA CARREGAR OS DADOS (Com st.cache_data para performance)
-# ------------------------------------------------------------
+#------------------------------------------------------------
 @st.cache_data
 def carregar_dados():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -72,17 +67,14 @@ def carregar_dados():
                 print(f"⚠️ Erro ao carregar/criar dados de exemplo para {nome}: {e}")
     return dados
  
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 # CARREGAMENTO DOS DADOS
-# ------------------------------------------------------------
+#------------------------------------------------------------
 dados_municipios = carregar_dados()
  
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 # MENU LATERAL HIERÁRQUICO E COLAPSÁVEL
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 with st.sidebar:
    st.markdown("## 📁 Menu de Navegação")
     
@@ -115,11 +107,9 @@ with st.sidebar:
                key="sub_43"
             )
  
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 # PÁGINA INICIAL
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 if menu_principal == "Página Inicial":
     st.header("🏠 Página Inicial")
    st.markdown("""
@@ -133,10 +123,9 @@ Carapina. 
     Use o **Menu de Navegação** lateral para escolher o Edital e a Seção de interesse.
    """)
  
-#
-------------------------------------------------------------
+#------------------------------------------------------------
 # FUNÇÃO PARA EXIBIR CADA EDITAL (AGORA APENAS COM LÓGICA DO RADIO BUTTON)
-# ------------------------------------------------------------
+#------------------------------------------------------------
 elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
     numero_edital = 40 if "40" in menu_principal else 43
     st.header(f"📘 Indicadores - {menu_principal}")
@@ -152,11 +141,9 @@ elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
         # Removemos st.tabs e usamos o valor do 'subpagina' (vindo do st.radio)
         # para determinar qual bloco de código será executado e exibido.
         
-        #
-------------------------------------------------------------
+        #------------------------------------------------------------
         # 1. VISÃO GERAL (subpagina == "📈 Visão Geral")
-        #
-------------------------------------------------------------
+        #------------------------------------------------------------
         if subpagina == "📈 Visão Geral":
            st.subheader("📈 Indicadores Globais por Município")
  
@@ -175,11 +162,9 @@ elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
            )
            st.plotly_chart(fig_bar, use_container_width=True)
  
-        #
-------------------------------------------------------------
+        #------------------------------------------------------------
         # 2. GRÁFICOS COMPARATIVOS (subpagina == "📊 Gráficos Comparativos")
-        #
-------------------------------------------------------------
+        #------------------------------------------------------------
         elif subpagina == "📊 Gráficos Comparativos":
            st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
  
@@ -206,11 +191,9 @@ elif menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
                )
                st.plotly_chart(fig, use_container_width=True)
  
-        #
-------------------------------------------------------------
+        #------------------------------------------------------------
         # 3. GRÁFICOS MUNICÍPIO / DISCIPLINA (subpagina == "🥧 Gráficos Município/Disciplina")
-        #
-------------------------------------------------------------
+        #------------------------------------------------------------
         elif subpagina == "🥧 Gráficos Município/Disciplina":
            st.subheader("🥧 Indicadores por Disciplina e Município")
  
