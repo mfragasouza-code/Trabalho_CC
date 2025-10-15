@@ -9,27 +9,25 @@ import os
 # ------------------------------------------------------------
 # CONFIGURAÇÕES INICIAIS
 # ------------------------------------------------------------
-# Definição das seções (abas)
-SECTION_NAMES = ["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"]
-
 st.set_page_config(
-    page_title="Indicadores - Editais 40 e 43/2024", # CORRIGIDO: 42 -> 43
+    page_title="Indicadores - Editais 40 e 43/2024",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# ------------------------------------------------------------
 # TÍTULO PRINCIPAL
-st.title("📊 Indicadores dos Editais 40/2024 e 43/2024 - SRE Carapina") # CORRIGIDO: 42 -> 43
+# ------------------------------------------------------------
+st.title("📊 Indicadores dos Editais 40/2024 e 43/2024 - SRE Carapina")
 st.markdown("""
-Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.
-Por *Mirella Fraga*
+Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.  
+Por *Mirella Fraga*  
 **Obs.:** Base de dados temporária e unificada enquanto o MVP é desenvolvido.
 """)
 
 # ------------------------------------------------------------
 # FUNÇÃO PARA CARREGAR OS DADOS
 # ------------------------------------------------------------
-# Nota: Para rodar, você deve ter os arquivos .xlsx no mesmo diretório.
 def carregar_dados():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,7 +36,6 @@ def carregar_dados():
         "Serra 40": os.path.join(BASE_DIR, "serra_40.xlsx"),
         "Fundão 40": os.path.join(BASE_DIR, "fundao_40.xlsx"),
         "Santa Teresa 40": os.path.join(BASE_DIR, "santa_teresa_40.xlsx"),
-        # CORRIGIDO: Referências a Edital 42 alteradas para 43
         "Vitória 43": os.path.join(BASE_DIR, "vitoria_43.xlsx"),
         "Serra 43": os.path.join(BASE_DIR, "serra_43.xlsx"),
         "Fundão 43": os.path.join(BASE_DIR, "fundao_43.xlsx"),
@@ -48,78 +45,74 @@ def carregar_dados():
     dados = {}
     for nome, caminho in arquivos.items():
         if os.path.exists(caminho):
-            try:
-                dados[nome] = pd.read_excel(caminho)
-            except Exception as e:
-                st.error(f"Erro ao ler o arquivo {caminho}: {e}")
+            dados[nome] = pd.read_excel(caminho)
         else:
             print(f"⚠️ Arquivo não encontrado: {caminho}")
     return dados
+
 
 # ------------------------------------------------------------
 # CARREGAMENTO DOS DADOS
 # ------------------------------------------------------------
 dados_municipios = carregar_dados()
 
-# Inicializa o estado de subpagina, se não existir OU se o valor for inválido, volta para o padrão.
-if ('subpagina_selecionada' not in st.session_state) or (st.session_state.subpagina_selecionada not in SECTION_NAMES): 
-    st.session_state.subpagina_selecionada = SECTION_NAMES[0]
 
 # ------------------------------------------------------------
-# MENU LATERAL HIERÁRQUICO E COLAPSÁVEL
+# MENU LATERAL HIERÁRQUICO E SINCRONIZADO
 # ------------------------------------------------------------
+if "menu_principal" not in st.session_state:
+    st.session_state["menu_principal"] = "Página Inicial"
+if "subpagina" not in st.session_state:
+    st.session_state["subpagina"] = "📈 Visão Geral"
+
 with st.sidebar:
     st.markdown("## 📁 Menu de Navegação")
     with st.expander("🌍 Selecione o Edital", expanded=True):
         menu_principal = st.radio(
             "Escolha o edital:",
-            # CORRIGIDO: Edital 42/2024 alterado para 43/2024
             ("Página Inicial", "Edital 40/2024", "Edital 43/2024"),
-            key="menu_principal"
+            key="menu_principal_radio",
+            index=["Página Inicial", "Edital 40/2024", "Edital 43/2024"].index(st.session_state["menu_principal"])
         )
 
-    # Submenus (apenas aparecem se um Edital estiver selecionado)
-    if "40" in menu_principal:
-        numero_edital = 40
-    # CORRIGIDO: Checagem para "43" e atribuição do número 43
-    elif "43" in menu_principal: 
-        numero_edital = 43
-    else:
-        numero_edital = None
-
-    if numero_edital:
-        with st.expander(f"📘 Edital {numero_edital}/2024 - Seções", expanded=True):
-            # O valor selecionado do rádio é salvo diretamente no st.session_state.subpagina_selecionada
-            st.radio(
+    subpagina = None
+    if menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
+        with st.expander(f"📘 {menu_principal} - Seções", expanded=True):
+            subpagina = st.radio(
                 "Navegue entre as seções:",
-                SECTION_NAMES,
-                key="subpagina_selecionada", # Usa a chave do session_state diretamente
-                # Define o índice com base no valor atual do session_state
-                # Adicionada proteção extra: se o valor não estiver na lista, retorna 0 (Visão Geral)
-                index=SECTION_NAMES.index(st.session_state.subpagina_selecionada) if st.session_state.subpagina_selecionada in SECTION_NAMES else 0
+                ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
+                key="subpagina_radio",
+                index=["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"].index(st.session_state["subpagina"])
             )
+
+    st.session_state["menu_principal"] = menu_principal
+    if subpagina:
+        st.session_state["subpagina"] = subpagina
+
 
 # ------------------------------------------------------------
 # PÁGINA INICIAL
 # ------------------------------------------------------------
-if menu_principal == "Página Inicial":
+if st.session_state["menu_principal"] == "Página Inicial":
     st.header("🏠 Página Inicial")
     st.markdown("""
-    Bem-vindo ao **Painel Interativo de Indicadores dos Editais 40/2024 e 43/2024** da SRE Carapina. 
+    Bem-vindo ao **Painel Interativo de Indicadores dos Editais 40/2024 e 43/2024** da SRE Carapina.  
     Aqui você poderá visualizar:
-    - 📈 Indicadores gerais por município;
-    - 📊 Gráficos comparativos por disciplina;
-    - 🥧 Distribuições detalhadas por município e disciplina.
+    - 📈 Indicadores gerais por município;  
+    - 📊 Gráficos comparativos por disciplina;  
+    - 🥧 Distribuições detalhadas por município e disciplina.  
 
-    Use o menu lateral para navegar entre os editais e suas seções.
+    Use o menu lateral ou as abas superiores para navegar.
     """)
+
 
 # ------------------------------------------------------------
 # FUNÇÃO PARA EXIBIR CADA EDITAL
 # ------------------------------------------------------------
-elif numero_edital:
-    st.header(f"📘 Indicadores - {menu_principal}")
-    st.markdown(f"Análise dos indicadores do **{menu_principal}**, por município e disciplina.")
+elif st.session_state["menu_principal"] in ["Edital 40/2024", "Edital 43/2024"]:
+    numero_edital = 40 if "40" in st.session_state["menu_principal"] else 43
+    st.header(f"📘 Indicadores - {st.session_state['menu_principal']}")
+    st.markdown(f"Análise dos indicadores do **{st.session_state['menu_principal']}**, por município e disciplina.")
 
     # Filtrar dados do edital
     dados_edital = {k: v for k, v in dados_municipios.items() if k.endswith(str(numero_edital))}
@@ -127,29 +120,18 @@ elif numero_edital:
     if not dados_edital:
         st.warning("⚠️ Nenhum dado encontrado. Verifique os arquivos Excel.")
     else:
-        # 1. Tenta obter o índice selecionado de forma segura.
-        #    Se houver qualquer falha (ValueError, TypeError), define selected_index = 0.
-        try:
-            # Pega o nome da seção do session state, com fallback para o primeiro nome
-            selected_section_name = st.session_state.get('subpagina_selecionada', SECTION_NAMES[0])
-            # Encontra o índice correspondente
-            selected_index = SECTION_NAMES.index(selected_section_name)
-        except Exception:
-            # Em caso de qualquer erro (ex: valor não encontrado ou tipo incorreto), usa 0
-            selected_index = 0
-            
-        # 2. Criar as abas. Apenas se SECTION_NAMES não for vazio e o número do edital estiver definido.
-        #    O índice já está garantido como INT ou 0 neste ponto.
-        if SECTION_NAMES and numero_edital:
-            # REFORÇO CRÍTICO: Garantir que o index é um INT no momento da chamada de st.tabs
-            abas = st.tabs(SECTION_NAMES, index=int(selected_index), key=f"abas_{numero_edital}")
-        
-            abas_dict = dict(zip(SECTION_NAMES, abas))
+        abas = st.tabs(["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"])
+        abas_dict = {
+            "📈 Visão Geral": abas[0],
+            "📊 Gráficos Comparativos": abas[1],
+            "🥧 Gráficos Município/Disciplina": abas[2]
+        }
 
-            # ------------------------------------------------------------
-            # VISÃO GERAL (Índice 0)
-            # ------------------------------------------------------------
-            with abas_dict[SECTION_NAMES[0]]:
+        # ------------------------------------------------------------
+        # VISÃO GERAL
+        # ------------------------------------------------------------
+        with abas_dict["📈 Visão Geral"]:
+            if st.session_state["subpagina"] == "📈 Visão Geral":
                 st.subheader("📈 Indicadores Globais por Município")
 
                 indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
@@ -167,10 +149,11 @@ elif numero_edital:
                 )
                 st.plotly_chart(fig_bar, use_container_width=True)
 
-            # ------------------------------------------------------------
-            # GRÁFICOS COMPARATIVOS (Índice 1)
-            # ------------------------------------------------------------
-            with abas_dict[SECTION_NAMES[1]]:
+        # ------------------------------------------------------------
+        # GRÁFICOS COMPARATIVOS
+        # ------------------------------------------------------------
+        with abas_dict["📊 Gráficos Comparativos"]:
+            if st.session_state["subpagina"] == "📊 Gráficos Comparativos":
                 st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
 
                 cidades_chave = list(dados_edital.keys())
@@ -196,21 +179,22 @@ elif numero_edital:
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
-            # ------------------------------------------------------------
-            # GRÁFICOS MUNICÍPIO / DISCIPLINA (Índice 2)
-            # ------------------------------------------------------------
-            with abas_dict[SECTION_NAMES[2]]:
+        # ------------------------------------------------------------
+        # GRÁFICOS MUNICÍPIO / DISCIPLINA + TAXA DE NÃO RESPOSTA
+        # ------------------------------------------------------------
+        with abas_dict["🥧 Gráficos Município/Disciplina"]:
+            if st.session_state["subpagina"] == "🥧 Gráficos Município/Disciplina":
                 st.subheader("🥧 Indicadores por Disciplina e Município")
 
                 municipios_disponiveis = list(dados_edital.keys())
-                municipio_escolhido = st.selectbox(
+                municipio_escolhido_exib = st.selectbox(
                     "Selecione o município:",
                     municipios_disponiveis,
                     key=f"select_municipio_pizza_{numero_edital}"
                 )
 
-                if municipio_escolhido:
-                    df = dados_edital[municipio_escolhido]
+                if municipio_escolhido_exib:
+                    df = dados_edital[municipio_escolhido_exib]
                     disciplinas_disponiveis = df["Disciplina"].unique().tolist()
 
                     disciplina_escolhida = st.selectbox(
@@ -226,7 +210,7 @@ elif numero_edital:
                         fig_pizza = px.pie(
                             values=valores.values,
                             names=valores.index,
-                            title=f"{disciplina_escolhida} - {municipio_escolhido} ({numero_edital}/2024)"
+                            title=f"{disciplina_escolhida} - {municipio_escolhido_exib} ({numero_edital}/2024)"
                         )
 
                         total_candidatos = linha["Total de candidatos"]
@@ -236,9 +220,7 @@ elif numero_edital:
 
                         taxa_nao_resposta = 0
                         if convocados > 0:
-                            # Corrigida a lógica: Taxa de não resposta = (Convocados - Documentos Recebidos) / Convocados
-                            documentos_recebidos = linha["Aguardando análise"] + linha["Eliminados"] + linha["Reclassificados"] + linha["Contratados"]
-                            taxa_nao_resposta = ((convocados - documentos_recebidos) / convocados) * 100
+                            taxa_nao_resposta = ((convocados - (documentos + aguardando)) / convocados) * 100
 
                         col1, col2 = st.columns([3, 1])
                         with col1:
@@ -249,5 +231,11 @@ elif numero_edital:
                             st.markdown(f"**Aguardando análise:** {aguardando}")
                             st.markdown(f"**Documentos analisados:** {documentos}")
                             st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
-        else:
-            st.error("Erro interno: Configuração de abas inválida.")
+
+# ------------------------------------------------------------
+# SINCRONIZAÇÃO AUTOMÁTICA ENTRE MENU E ABAS
+# ------------------------------------------------------------
+if st.session_state["menu_principal"] in ["Edital 40/2024", "Edital 43/2024"]:
+    for nome, aba in abas_dict.items():
+        if aba and aba.title == st.session_state["subpagina"]:
+            st.session_state["subpagina"] = nome
