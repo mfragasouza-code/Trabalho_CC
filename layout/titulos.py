@@ -141,8 +141,8 @@ elif numero_edital:
         # 2. Criar as abas. Apenas se SECTION_NAMES não for vazio e o número do edital estiver definido.
         #    O índice já está garantido como INT ou 0 neste ponto.
         if SECTION_NAMES and numero_edital:
-            # Usamos a chave dinâmica para forçar a recriação correta ao mudar de Edital
-            abas = st.tabs(SECTION_NAMES, index=selected_index, key=f"abas_{numero_edital}")
+            # REFORÇO CRÍTICO: Garantir que o index é um INT no momento da chamada de st.tabs
+            abas = st.tabs(SECTION_NAMES, index=int(selected_index), key=f"abas_{numero_edital}")
         
             abas_dict = dict(zip(SECTION_NAMES, abas))
 
