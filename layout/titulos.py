@@ -9,23 +9,27 @@ import os
 # ------------------------------------------------------------
 # CONFIGURAÇÕES INICIAIS
 # ------------------------------------------------------------
+# Definição das seções (abas)
+SECTION_NAMES = ["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"]
+
 st.set_page_config(
-    page_title="Indicadores - Editais 40 e 42/2024",
+    page_title="Indicadores - Editais 40 e 43/2024", # CORRIGIDO: 42 -> 43
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # TÍTULO PRINCIPAL
-st.title("📊 Indicadores dos Editais 40/2024 e 42/2024 - SRE Carapina")
+st.title("📊 Indicadores dos Editais 40/2024 e 43/2024 - SRE Carapina") # CORRIGIDO: 42 -> 43
 st.markdown("""
-Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.  
-Por *Mirella Fraga*  
+Análise comparativa por **município** e **disciplina**, com base nos indicadores dos processos seletivos.
+Por *Mirella Fraga*
 **Obs.:** Base de dados temporária e unificada enquanto o MVP é desenvolvido.
 """)
 
 # ------------------------------------------------------------
 # FUNÇÃO PARA CARREGAR OS DADOS
 # ------------------------------------------------------------
+# Nota: Para rodar, você deve ter os arquivos .xlsx no mesmo diretório.
 def carregar_dados():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -34,16 +38,20 @@ def carregar_dados():
         "Serra 40": os.path.join(BASE_DIR, "serra_40.xlsx"),
         "Fundão 40": os.path.join(BASE_DIR, "fundao_40.xlsx"),
         "Santa Teresa 40": os.path.join(BASE_DIR, "santa_teresa_40.xlsx"),
-        "Vitória 42": os.path.join(BASE_DIR, "vitoria_42.xlsx"),
-        "Serra 42": os.path.join(BASE_DIR, "serra_42.xlsx"),
-        "Fundão 42": os.path.join(BASE_DIR, "fundao_42.xlsx"),
-        "Santa Teresa 42": os.path.join(BASE_DIR, "santa_teresa_42.xlsx"),
+        # CORRIGIDO: Referências a Edital 42 alteradas para 43
+        "Vitória 43": os.path.join(BASE_DIR, "vitoria_43.xlsx"),
+        "Serra 43": os.path.join(BASE_DIR, "serra_43.xlsx"),
+        "Fundão 43": os.path.join(BASE_DIR, "fundao_43.xlsx"),
+        "Santa Teresa 43": os.path.join(BASE_DIR, "santa_teresa_43.xlsx"),
     }
 
     dados = {}
     for nome, caminho in arquivos.items():
         if os.path.exists(caminho):
-            dados[nome] = pd.read_excel(caminho)
+            try:
+                dados[nome] = pd.read_excel(caminho)
+            except Exception as e:
+                st.error(f"Erro ao ler o arquivo {caminho}: {e}")
         else:
             print(f"⚠️ Arquivo não encontrado: {caminho}")
     return dados
@@ -53,6 +61,10 @@ def carregar_dados():
 # ------------------------------------------------------------
 dados_municipios = carregar_dados()
 
+# Inicializa o estado de subpagina, se não existir
+if 'subpagina' not in st.session_state:
+    st.session_state.subpagina = SECTION_NAMES[0]
+
 # ------------------------------------------------------------
 # MENU LATERAL HIERÁRQUICO E COLAPSÁVEL
 # ------------------------------------------------------------
@@ -61,27 +73,33 @@ with st.sidebar:
     with st.expander("🌍 Selecione o Edital", expanded=True):
         menu_principal = st.radio(
             "Escolha o edital:",
-            ("Página Inicial", "Edital 40/2024", "Edital 42/2024"),
+            # CORRIGIDO: Edital 42/2024 alterado para 43/2024
+            ("Página Inicial", "Edital 40/2024", "Edital 43/2024"),
             key="menu_principal"
         )
 
-    # Submenus (aparecem de forma hierárquica)
+    # Submenus (apenas aparecem se um Edital estiver selecionado)
     subpagina = None
-    if menu_principal == "Edital 40/2024":
-        with st.expander("📘 Edital 40/2024 - Seções", expanded=True):
-            subpagina = st.radio(
-                "Navegue entre as seções:",
-                ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
-                key="sub_40"
-            )
+    if "40" in menu_principal:
+        numero_edital = 40
+    # CORRIGIDO: Checagem para "43" e atribuição do número 43
+    elif "43" in menu_principal: 
+        numero_edital = 43
+    else:
+        numero_edital = None
 
-    elif menu_principal == "Edital 42/2024":
-        with st.expander("📗 Edital 42/2024 - Seções", expanded=True):
+    if numero_edital:
+        with st.expander(f"📘 Edital {numero_edital}/2024 - Seções", expanded=True):
+            # Usamos o key 'subpagina' para que o estado do rádio seja acessível
+            # fora do sidebar (no main content) e sirva como mestre da navegação
             subpagina = st.radio(
                 "Navegue entre as seções:",
-                ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
-                key="sub_42"
+                SECTION_NAMES,
+                key="subpagina", # A chave é a mesma, mas o valor é atualizado
+                index=SECTION_NAMES.index(st.session_state.subpagina) if st.session_state.subpagina in SECTION_NAMES else 0
             )
+            # Atualiza o estado da sessão com a última subpágina clicada
+            st.session_state.subpagina = subpagina
 
 # ------------------------------------------------------------
 # PÁGINA INICIAL
@@ -89,11 +107,11 @@ with st.sidebar:
 if menu_principal == "Página Inicial":
     st.header("🏠 Página Inicial")
     st.markdown("""
-    Bem-vindo ao **Painel Interativo de Indicadores dos Editais 40/2024 e 42/2024** da SRE Carapina.  
+    Bem-vindo ao **Painel Interativo de Indicadores dos Editais 40/2024 e 43/2024** da SRE Carapina. 
     Aqui você poderá visualizar:
-    - 📈 Indicadores gerais por município;  
-    - 📊 Gráficos comparativos por disciplina;  
-    - 🥧 Distribuições detalhadas por município e disciplina.  
+    - 📈 Indicadores gerais por município;
+    - 📊 Gráficos comparativos por disciplina;
+    - 🥧 Distribuições detalhadas por município e disciplina.
 
     Use o menu lateral para navegar entre os editais e suas seções.
     """)
@@ -101,8 +119,7 @@ if menu_principal == "Página Inicial":
 # ------------------------------------------------------------
 # FUNÇÃO PARA EXIBIR CADA EDITAL
 # ------------------------------------------------------------
-elif menu_principal in ["Edital 40/2024", "Edital 42/2024"]:
-    numero_edital = 40 if "40" in menu_principal else 42
+elif numero_edital:
     st.header(f"📘 Indicadores - {menu_principal}")
     st.markdown(f"Análise dos indicadores do **{menu_principal}**, por município e disciplina.")
 
@@ -112,114 +129,116 @@ elif menu_principal in ["Edital 40/2024", "Edital 42/2024"]:
     if not dados_edital:
         st.warning("⚠️ Nenhum dado encontrado. Verifique os arquivos Excel.")
     else:
-        abas = st.tabs(["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"])
-        abas_dict = {
-            "📈 Visão Geral": abas[0],
-            "📊 Gráficos Comparativos": abas[1],
-            "🥧 Gráficos Município/Disciplina": abas[2]
-        }
+        # 1. Calcular o índice da aba a ser ativada (sincronização Sidebar -> Tab)
+        try:
+            selected_index = SECTION_NAMES.index(st.session_state.subpagina)
+        except ValueError:
+            selected_index = 0
+
+        # 2. Criar as abas, forçando a seleção pelo índice do menu lateral
+        abas = st.tabs(SECTION_NAMES, index=selected_index)
+        abas_dict = dict(zip(SECTION_NAMES, abas))
 
         # ------------------------------------------------------------
-        # VISÃO GERAL
+        # VISÃO GERAL (Índice 0)
         # ------------------------------------------------------------
-        with abas_dict["📈 Visão Geral"]:
-            if subpagina == "📈 Visão Geral" or subpagina is None:
-                st.subheader("📈 Indicadores Globais por Município")
+        with abas_dict[SECTION_NAMES[0]]:
+            st.subheader("📈 Indicadores Globais por Município")
 
-                indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
-                resumo = []
-                for municipio, df in dados_edital.items():
-                    soma = df[indicadores].sum(numeric_only=True)
-                    soma["Município"] = municipio
-                    resumo.append(soma)
+            indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
+            resumo = []
+            for municipio, df in dados_edital.items():
+                soma = df[indicadores].sum(numeric_only=True)
+                soma["Município"] = municipio
+                resumo.append(soma)
 
-                df_resumo = pd.DataFrame(resumo)
-                fig_bar = px.bar(
-                    df_resumo.melt(id_vars="Município", var_name="Indicador", value_name="Total"),
-                    x="Município", y="Total", color="Indicador",
-                    title=f"Comparativo de Indicadores - Edital {numero_edital}/2024"
+            df_resumo = pd.DataFrame(resumo)
+            fig_bar = px.bar(
+                df_resumo.melt(id_vars="Município", var_name="Indicador", value_name="Total"),
+                x="Município", y="Total", color="Indicador",
+                title=f"Comparativo de Indicadores - Edital {numero_edital}/2024"
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+        # ------------------------------------------------------------
+        # GRÁFICOS COMPARATIVOS (Índice 1)
+        # ------------------------------------------------------------
+        with abas_dict[SECTION_NAMES[1]]:
+            st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
+
+            cidades_chave = list(dados_edital.keys())
+            cidades_exibicao = [c.replace(f" {numero_edital}", "") for c in cidades_chave]
+            map_exib_to_chave = {exib: chave for exib, chave in zip(cidades_exibicao, cidades_chave)}
+
+            municipio_escolhido_exib = st.selectbox(
+                "Selecione o município:",
+                cidades_exibicao,
+                key=f"select_municipio_barras_{numero_edital}"
+            )
+
+            if municipio_escolhido_exib:
+                municipio_chave = map_exib_to_chave[municipio_escolhido_exib]
+                df = dados_edital[municipio_chave]
+
+                fig = px.bar(
+                    df,
+                    x="Disciplina",
+                    y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
+                    barmode="group",
+                    title=f"{municipio_escolhido_exib} - Edital {numero_edital}/2024"
                 )
-                st.plotly_chart(fig_bar, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True)
 
         # ------------------------------------------------------------
-        # GRÁFICOS COMPARATIVOS
+        # GRÁFICOS MUNICÍPIO / DISCIPLINA (Índice 2)
         # ------------------------------------------------------------
-        with abas_dict["📊 Gráficos Comparativos"]:
-            if subpagina == "📊 Gráficos Comparativos":
-                st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
+        with abas_dict[SECTION_NAMES[2]]:
+            st.subheader("🥧 Indicadores por Disciplina e Município")
 
-                cidades_chave = list(dados_edital.keys())
-                cidades_exibicao = [c.replace(f" {numero_edital}", "") for c in cidades_chave]
-                map_exib_to_chave = {exib: chave for exib, chave in zip(cidades_exibicao, cidades_chave)}
+            municipios_disponiveis = list(dados_edital.keys())
+            municipio_escolhido = st.selectbox(
+                "Selecione o município:",
+                municipios_disponiveis,
+                key=f"select_municipio_pizza_{numero_edital}"
+            )
 
-                municipio_escolhido_exib = st.selectbox(
-                    "Selecione o município:",
-                    cidades_exibicao,
-                    key=f"select_municipio_barras_{numero_edital}"
+            if municipio_escolhido:
+                df = dados_edital[municipio_escolhido]
+                disciplinas_disponiveis = df["Disciplina"].unique().tolist()
+
+                disciplina_escolhida = st.selectbox(
+                    "Selecione a disciplina:",
+                    disciplinas_disponiveis,
+                    key=f"select_disciplina_pizza_{numero_edital}"
                 )
 
-                if municipio_escolhido_exib:
-                    municipio_chave = map_exib_to_chave[municipio_escolhido_exib]
-                    df = dados_edital[municipio_chave]
+                if disciplina_escolhida:
+                    linha = df[df["Disciplina"] == disciplina_escolhida].iloc[0]
+                    valores = linha[["Aguardando análise", "Eliminados", "Reclassificados", "Contratados"]]
 
-                    fig = px.bar(
-                        df,
-                        x="Disciplina",
-                        y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
-                        barmode="group",
-                        title=f"{municipio_escolhido_exib} - Edital {numero_edital}/2024"
+                    fig_pizza = px.pie(
+                        values=valores.values,
+                        names=valores.index,
+                        title=f"{disciplina_escolhida} - {municipio_escolhido} ({numero_edital}/2024)"
                     )
-                    st.plotly_chart(fig, use_container_width=True)
 
-        # ------------------------------------------------------------
-        # GRÁFICOS MUNICÍPIO / DISCIPLINA + TAXA DE NÃO RESPOSTA
-        # ------------------------------------------------------------
-        with abas_dict["🥧 Gráficos Município/Disciplina"]:
-            if subpagina == "🥧 Gráficos Município/Disciplina":
-                st.subheader("🥧 Indicadores por Disciplina e Município")
+                    total_candidatos = linha["Total de candidatos"]
+                    convocados = linha["Convocados"]
+                    aguardando = linha["Aguardando análise"]
+                    documentos = linha["Documentos analisados"]
 
-                municipios_disponiveis = list(dados_edital.keys())
-                municipio_escolhido_exib = st.selectbox(
-                    "Selecione o município:",
-                    municipios_disponiveis,
-                    key=f"select_municipio_pizza_{numero_edital}"
-                )
+                    taxa_nao_resposta = 0
+                    if convocados > 0:
+                        # Corrigida a lógica: Taxa de não resposta = (Convocados - Documentos Recebidos) / Convocados
+                        documentos_recebidos = linha["Aguardando análise"] + linha["Eliminados"] + linha["Reclassificados"] + linha["Contratados"]
+                        taxa_nao_resposta = ((convocados - documentos_recebidos) / convocados) * 100
 
-                if municipio_escolhido_exib:
-                    df = dados_edital[municipio_escolhido_exib]
-                    disciplinas_disponiveis = df["Disciplina"].unique().tolist()
-
-                    disciplina_escolhida = st.selectbox(
-                        "Selecione a disciplina:",
-                        disciplinas_disponiveis,
-                        key=f"select_disciplina_pizza_{numero_edital}"
-                    )
-
-                    if disciplina_escolhida:
-                        linha = df[df["Disciplina"] == disciplina_escolhida].iloc[0]
-                        valores = linha[["Aguardando análise", "Eliminados", "Reclassificados", "Contratados"]]
-
-                        fig_pizza = px.pie(
-                            values=valores.values,
-                            names=valores.index,
-                            title=f"{disciplina_escolhida} - {municipio_escolhido_exib} ({numero_edital}/2024)"
-                        )
-
-                        total_candidatos = linha["Total de candidatos"]
-                        convocados = linha["Convocados"]
-                        aguardando = linha["Aguardando análise"]
-                        documentos = linha["Documentos analisados"]
-
-                        taxa_nao_resposta = 0
-                        if convocados > 0:
-                            taxa_nao_resposta = ((convocados - (documentos + aguardando)) / convocados) * 100
-
-                        col1, col2 = st.columns([3, 1])
-                        with col1:
-                            st.plotly_chart(fig_pizza, use_container_width=True)
-                        with col2:
-                            st.markdown(f"**Total de candidatos:** {total_candidatos}")
-                            st.markdown(f"**Convocados:** {convocados}")
-                            st.markdown(f"**Aguardando análise:** {aguardando}")
-                            st.markdown(f"**Documentos analisados:** {documentos}")
-                            st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.plotly_chart(fig_pizza, use_container_width=True)
+                    with col2:
+                        st.markdown(f"**Total de candidatos:** {total_candidatos}")
+                        st.markdown(f"**Convocados:** {convocados}")
+                        st.markdown(f"**Aguardando análise:** {aguardando}")
+                        st.markdown(f"**Documentos analisados:** {documentos}")
+                        st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
