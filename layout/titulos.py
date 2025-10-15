@@ -56,39 +56,43 @@ def carregar_dados():
 # ------------------------------------------------------------
 dados_municipios = carregar_dados()
 
-
 # ------------------------------------------------------------
-# MENU LATERAL HIERÁRQUICO E SINCRONIZADO
+# ESTADOS INICIAIS
 # ------------------------------------------------------------
 if "menu_principal" not in st.session_state:
     st.session_state["menu_principal"] = "Página Inicial"
 if "subpagina" not in st.session_state:
     st.session_state["subpagina"] = "📈 Visão Geral"
 
+# ------------------------------------------------------------
+# MENU LATERAL
+# ------------------------------------------------------------
 with st.sidebar:
     st.markdown("## 📁 Menu de Navegação")
-    with st.expander("🌍 Selecione o Edital", expanded=True):
-        menu_principal = st.radio(
-            "Escolha o edital:",
-            ("Página Inicial", "Edital 40/2024", "Edital 43/2024"),
-            key="menu_principal_radio",
-            index=["Página Inicial", "Edital 40/2024", "Edital 43/2024"].index(st.session_state["menu_principal"])
-        )
 
-    subpagina = None
-    if menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
-        with st.expander(f"📘 {menu_principal} - Seções", expanded=True):
-            subpagina = st.radio(
-                "Navegue entre as seções:",
-                ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
-                key="subpagina_radio",
-                index=["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"].index(st.session_state["subpagina"])
-            )
+    # Menu principal
+    menu_principal = st.radio(
+        "Escolha o edital:",
+        ("Página Inicial", "Edital 40/2024", "Edital 43/2024"),
+        index=["Página Inicial", "Edital 40/2024", "Edital 43/2024"].index(st.session_state["menu_principal"]),
+        key="menu_principal_radio"
+    )
 
     st.session_state["menu_principal"] = menu_principal
-    if subpagina:
-        st.session_state["subpagina"] = subpagina
 
+    # Submenu
+    subpagina = None
+    if menu_principal in ["Edital 40/2024", "Edital 43/2024"]:
+        subpagina = st.radio(
+            "Navegue entre as seções:",
+            ("📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"),
+            index=["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"].index(st.session_state["subpagina"]),
+            key=f"subpagina_{menu_principal}"
+        )
+
+        # Atualiza o estado apenas quando o usuário muda
+        if subpagina != st.session_state["subpagina"]:
+            st.session_state["subpagina"] = subpagina
 
 # ------------------------------------------------------------
 # PÁGINA INICIAL
@@ -105,137 +109,120 @@ if st.session_state["menu_principal"] == "Página Inicial":
     Use o menu lateral ou as abas superiores para navegar.
     """)
 
-
 # ------------------------------------------------------------
-# FUNÇÃO PARA EXIBIR CADA EDITAL
+# PÁGINAS DOS EDITAIS
 # ------------------------------------------------------------
 elif st.session_state["menu_principal"] in ["Edital 40/2024", "Edital 43/2024"]:
     numero_edital = 40 if "40" in st.session_state["menu_principal"] else 43
     st.header(f"📘 Indicadores - {st.session_state['menu_principal']}")
     st.markdown(f"Análise dos indicadores do **{st.session_state['menu_principal']}**, por município e disciplina.")
 
-    # Filtrar dados do edital
+    # Filtra os dados do edital selecionado
     dados_edital = {k: v for k, v in dados_municipios.items() if k.endswith(str(numero_edital))}
 
     if not dados_edital:
         st.warning("⚠️ Nenhum dado encontrado. Verifique os arquivos Excel.")
     else:
         abas = st.tabs(["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"])
-        abas_dict = {
-            "📈 Visão Geral": abas[0],
-            "📊 Gráficos Comparativos": abas[1],
-            "🥧 Gráficos Município/Disciplina": abas[2]
-        }
+        nomes_abas = ["📈 Visão Geral", "📊 Gráficos Comparativos", "🥧 Gráficos Município/Disciplina"]
 
-        # ------------------------------------------------------------
-        # VISÃO GERAL
-        # ------------------------------------------------------------
-        with abas_dict["📈 Visão Geral"]:
-            if st.session_state["subpagina"] == "📈 Visão Geral":
-                st.subheader("📈 Indicadores Globais por Município")
+        # Sincronização da aba clicada com o estado da sessão
+        aba_selecionada = st.session_state["subpagina"]
+        for i, nome_aba in enumerate(nomes_abas):
+            with abas[i]:
+                if aba_selecionada == nome_aba:
+                    st.session_state["subpagina"] = nome_aba
 
-                indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
-                resumo = []
-                for municipio, df in dados_edital.items():
-                    soma = df[indicadores].sum(numeric_only=True)
-                    soma["Município"] = municipio
-                    resumo.append(soma)
+                # CONTEÚDO DAS ABAS
+                if nome_aba == "📈 Visão Geral" and aba_selecionada == "📈 Visão Geral":
+                    st.subheader("📈 Indicadores Globais por Município")
 
-                df_resumo = pd.DataFrame(resumo)
-                fig_bar = px.bar(
-                    df_resumo.melt(id_vars="Município", var_name="Indicador", value_name="Total"),
-                    x="Município", y="Total", color="Indicador",
-                    title=f"Comparativo de Indicadores - Edital {numero_edital}/2024"
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
+                    indicadores = ["Aguardando análise", "Reclassificados", "Eliminados", "Contratados"]
+                    resumo = []
+                    for municipio, df in dados_edital.items():
+                        soma = df[indicadores].sum(numeric_only=True)
+                        soma["Município"] = municipio
+                        resumo.append(soma)
 
-        # ------------------------------------------------------------
-        # GRÁFICOS COMPARATIVOS
-        # ------------------------------------------------------------
-        with abas_dict["📊 Gráficos Comparativos"]:
-            if st.session_state["subpagina"] == "📊 Gráficos Comparativos":
-                st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
-
-                cidades_chave = list(dados_edital.keys())
-                cidades_exibicao = [c.replace(f" {numero_edital}", "") for c in cidades_chave]
-                map_exib_to_chave = {exib: chave for exib, chave in zip(cidades_exibicao, cidades_chave)}
-
-                municipio_escolhido_exib = st.selectbox(
-                    "Selecione o município:",
-                    cidades_exibicao,
-                    key=f"select_municipio_barras_{numero_edital}"
-                )
-
-                if municipio_escolhido_exib:
-                    municipio_chave = map_exib_to_chave[municipio_escolhido_exib]
-                    df = dados_edital[municipio_chave]
-
-                    fig = px.bar(
-                        df,
-                        x="Disciplina",
-                        y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
-                        barmode="group",
-                        title=f"{municipio_escolhido_exib} - Edital {numero_edital}/2024"
+                    df_resumo = pd.DataFrame(resumo)
+                    fig_bar = px.bar(
+                        df_resumo.melt(id_vars="Município", var_name="Indicador", value_name="Total"),
+                        x="Município", y="Total", color="Indicador",
+                        title=f"Comparativo de Indicadores - Edital {numero_edital}/2024"
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig_bar, use_container_width=True)
 
-        # ------------------------------------------------------------
-        # GRÁFICOS MUNICÍPIO / DISCIPLINA + TAXA DE NÃO RESPOSTA
-        # ------------------------------------------------------------
-        with abas_dict["🥧 Gráficos Município/Disciplina"]:
-            if st.session_state["subpagina"] == "🥧 Gráficos Município/Disciplina":
-                st.subheader("🥧 Indicadores por Disciplina e Município")
+                elif nome_aba == "📊 Gráficos Comparativos" and aba_selecionada == "📊 Gráficos Comparativos":
+                    st.subheader("📊 Comparativo de Indicadores Entre Disciplinas do Município")
 
-                municipios_disponiveis = list(dados_edital.keys())
-                municipio_escolhido_exib = st.selectbox(
-                    "Selecione o município:",
-                    municipios_disponiveis,
-                    key=f"select_municipio_pizza_{numero_edital}"
-                )
+                    cidades_chave = list(dados_edital.keys())
+                    cidades_exibicao = [c.replace(f" {numero_edital}", "") for c in cidades_chave]
+                    map_exib_to_chave = {exib: chave for exib, chave in zip(cidades_exibicao, cidades_chave)}
 
-                if municipio_escolhido_exib:
-                    df = dados_edital[municipio_escolhido_exib]
-                    disciplinas_disponiveis = df["Disciplina"].unique().tolist()
-
-                    disciplina_escolhida = st.selectbox(
-                        "Selecione a disciplina:",
-                        disciplinas_disponiveis,
-                        key=f"select_disciplina_pizza_{numero_edital}"
+                    municipio_escolhido_exib = st.selectbox(
+                        "Selecione o município:",
+                        cidades_exibicao,
+                        key=f"select_municipio_barras_{numero_edital}"
                     )
 
-                    if disciplina_escolhida:
-                        linha = df[df["Disciplina"] == disciplina_escolhida].iloc[0]
-                        valores = linha[["Aguardando análise", "Eliminados", "Reclassificados", "Contratados"]]
+                    if municipio_escolhido_exib:
+                        municipio_chave = map_exib_to_chave[municipio_escolhido_exib]
+                        df = dados_edital[municipio_chave]
 
-                        fig_pizza = px.pie(
-                            values=valores.values,
-                            names=valores.index,
-                            title=f"{disciplina_escolhida} - {municipio_escolhido_exib} ({numero_edital}/2024)"
+                        fig = px.bar(
+                            df,
+                            x="Disciplina",
+                            y=["Total de candidatos", "Convocados", "Eliminados", "Reclassificados", "Contratados"],
+                            barmode="group",
+                            title=f"{municipio_escolhido_exib} - Edital {numero_edital}/2024"
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+
+                elif nome_aba == "🥧 Gráficos Município/Disciplina" and aba_selecionada == "🥧 Gráficos Município/Disciplina":
+                    st.subheader("🥧 Indicadores por Disciplina e Município")
+
+                    municipios_disponiveis = list(dados_edital.keys())
+                    municipio_escolhido_exib = st.selectbox(
+                        "Selecione o município:",
+                        municipios_disponiveis,
+                        key=f"select_municipio_pizza_{numero_edital}"
+                    )
+
+                    if municipio_escolhido_exib:
+                        df = dados_edital[municipio_escolhido_exib]
+                        disciplinas_disponiveis = df["Disciplina"].unique().tolist()
+
+                        disciplina_escolhida = st.selectbox(
+                            "Selecione a disciplina:",
+                            disciplinas_disponiveis,
+                            key=f"select_disciplina_pizza_{numero_edital}"
                         )
 
-                        total_candidatos = linha["Total de candidatos"]
-                        convocados = linha["Convocados"]
-                        aguardando = linha["Aguardando análise"]
-                        documentos = linha["Documentos analisados"]
+                        if disciplina_escolhida:
+                            linha = df[df["Disciplina"] == disciplina_escolhida].iloc[0]
+                            valores = linha[["Aguardando análise", "Eliminados", "Reclassificados", "Contratados"]]
 
-                        taxa_nao_resposta = 0
-                        if convocados > 0:
-                            taxa_nao_resposta = ((convocados - (documentos + aguardando)) / convocados) * 100
+                            fig_pizza = px.pie(
+                                values=valores.values,
+                                names=valores.index,
+                                title=f"{disciplina_escolhida} - {municipio_escolhido_exib} ({numero_edital}/2024)"
+                            )
 
-                        col1, col2 = st.columns([3, 1])
-                        with col1:
-                            st.plotly_chart(fig_pizza, use_container_width=True)
-                        with col2:
-                            st.markdown(f"**Total de candidatos:** {total_candidatos}")
-                            st.markdown(f"**Convocados:** {convocados}")
-                            st.markdown(f"**Aguardando análise:** {aguardando}")
-                            st.markdown(f"**Documentos analisados:** {documentos}")
-                            st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
+                            total_candidatos = linha["Total de candidatos"]
+                            convocados = linha["Convocados"]
+                            aguardando = linha["Aguardando análise"]
+                            documentos = linha["Documentos analisados"]
 
-# ------------------------------------------------------------
-# SINCRONIZAÇÃO AUTOMÁTICA ENTRE MENU E ABAS
-# ------------------------------------------------------------
-if st.session_state["menu_principal"] in ["Edital 40/2024", "Edital 43/2024"]:
-    for nome, aba in abas_dict.items():
-        if aba and aba.title == st.session_state["subpagina"]:
-            st.session_state["subpagina"] = nome
+                            taxa_nao_resposta = 0
+                            if convocados > 0:
+                                taxa_nao_resposta = ((convocados - (documentos + aguardando)) / convocados) * 100
+
+                            col1, col2 = st.columns([3, 1])
+                            with col1:
+                                st.plotly_chart(fig_pizza, use_container_width=True)
+                            with col2:
+                                st.markdown(f"**Total de candidatos:** {total_candidatos}")
+                                st.markdown(f"**Convocados:** {convocados}")
+                                st.markdown(f"**Aguardando análise:** {aguardando}")
+                                st.markdown(f"**Documentos analisados:** {documentos}")
+                                st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
