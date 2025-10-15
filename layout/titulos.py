@@ -128,8 +128,9 @@ elif numero_edital:
     if not dados_edital:
         st.warning("⚠️ Nenhum dado encontrado. Verifique os arquivos Excel.")
     else:
-        # 1. Obter a aba a ser ativada do estado da sessão
-        selected_section_name = st.session_state.subpagina_selecionada
+        # 1. Obter a aba a ser ativada do estado da sessão de forma segura
+        # Usa .get() com valor padrão para evitar erro se 'subpagina_selecionada' não estiver pronta
+        selected_section_name = st.session_state.get('subpagina_selecionada', SECTION_NAMES[0])
         
         # 2. Calcular o índice da aba a ser ativada (sincronização Sidebar -> Tab)
         # Proteção: Se a seção selecionada for desconhecida, assume 0 (Visão Geral)
@@ -139,8 +140,8 @@ elif numero_edital:
             selected_index = 0
 
         # 3. Criar as abas, forçando a seleção pelo índice do menu lateral
-        # Garante que selected_index é um inteiro válido
-        abas = st.tabs(SECTION_NAMES, index=int(selected_index))
+        # Não precisa do int() explícito aqui, pois o try/except garante que selected_index é 0 ou o índice.
+        abas = st.tabs(SECTION_NAMES, index=selected_index)
         abas_dict = dict(zip(SECTION_NAMES, abas))
 
         # ------------------------------------------------------------
