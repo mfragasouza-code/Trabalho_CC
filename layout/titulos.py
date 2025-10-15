@@ -61,8 +61,8 @@ def carregar_dados():
 # ------------------------------------------------------------
 dados_municipios = carregar_dados()
 
-# Inicializa o estado de subpagina, se não existir
-if 'subpagina_selecionada' not in st.session_state: # Renomeada a chave para evitar conflito
+# Inicializa o estado de subpagina, se não existir OU se o valor for inválido, volta para o padrão.
+if ('subpagina_selecionada' not in st.session_state) or (st.session_state.subpagina_selecionada not in SECTION_NAMES): 
     st.session_state.subpagina_selecionada = SECTION_NAMES[0]
 
 # ------------------------------------------------------------
@@ -96,6 +96,7 @@ with st.sidebar:
                 SECTION_NAMES,
                 key="subpagina_selecionada", # Usa a chave do session_state diretamente
                 # Define o índice com base no valor atual do session_state
+                # Adicionada proteção extra: se o valor não estiver na lista, retorna 0 (Visão Geral)
                 index=SECTION_NAMES.index(st.session_state.subpagina_selecionada) if st.session_state.subpagina_selecionada in SECTION_NAMES else 0
             )
 
@@ -131,13 +132,14 @@ elif numero_edital:
         selected_section_name = st.session_state.subpagina_selecionada
         
         # 2. Calcular o índice da aba a ser ativada (sincronização Sidebar -> Tab)
+        # Proteção: Se a seção selecionada for desconhecida, assume 0 (Visão Geral)
         try:
             selected_index = SECTION_NAMES.index(selected_section_name)
         except ValueError:
             selected_index = 0
 
         # 3. Criar as abas, forçando a seleção pelo índice do menu lateral
-        # Se o usuário clicar diretamente na aba, Streamlit a definirá como ativa.
+        # Agora selected_index tem garantia de ser um inteiro válido (0, 1 ou 2)
         abas = st.tabs(SECTION_NAMES, index=selected_index)
         abas_dict = dict(zip(SECTION_NAMES, abas))
 
