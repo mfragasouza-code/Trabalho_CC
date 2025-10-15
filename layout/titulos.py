@@ -62,8 +62,8 @@ def carregar_dados():
 dados_municipios = carregar_dados()
 
 # Inicializa o estado de subpagina, se não existir
-if 'subpagina' not in st.session_state:
-    st.session_state.subpagina = SECTION_NAMES[0]
+if 'subpagina_selecionada' not in st.session_state: # Renomeada a chave para evitar conflito
+    st.session_state.subpagina_selecionada = SECTION_NAMES[0]
 
 # ------------------------------------------------------------
 # MENU LATERAL HIERÁRQUICO E COLAPSÁVEL
@@ -79,7 +79,7 @@ with st.sidebar:
         )
 
     # Submenus (apenas aparecem se um Edital estiver selecionado)
-    subpagina = None
+    subpagina = None # Inicializa subpagina para o escopo do sidebar
     if "40" in menu_principal:
         numero_edital = 40
     # CORRIGIDO: Checagem para "43" e atribuição do número 43
@@ -90,16 +90,14 @@ with st.sidebar:
 
     if numero_edital:
         with st.expander(f"📘 Edital {numero_edital}/2024 - Seções", expanded=True):
-            # Usamos o key 'subpagina' para que o estado do rádio seja acessível
-            # fora do sidebar (no main content) e sirva como mestre da navegação
+            # O valor selecionado do rádio é salvo diretamente no st.session_state.subpagina_selecionada
             subpagina = st.radio(
                 "Navegue entre as seções:",
                 SECTION_NAMES,
-                key="subpagina", # A chave é a mesma, mas o valor é atualizado
-                index=SECTION_NAMES.index(st.session_state.subpagina) if st.session_state.subpagina in SECTION_NAMES else 0
+                key="subpagina_selecionada", # Usa a chave do session_state diretamente
+                # Define o índice com base no valor atual do session_state
+                index=SECTION_NAMES.index(st.session_state.subpagina_selecionada) if st.session_state.subpagina_selecionada in SECTION_NAMES else 0
             )
-            # Atualiza o estado da sessão com a última subpágina clicada
-            st.session_state.subpagina = subpagina
 
 # ------------------------------------------------------------
 # PÁGINA INICIAL
@@ -129,13 +127,17 @@ elif numero_edital:
     if not dados_edital:
         st.warning("⚠️ Nenhum dado encontrado. Verifique os arquivos Excel.")
     else:
-        # 1. Calcular o índice da aba a ser ativada (sincronização Sidebar -> Tab)
+        # 1. Obter a aba a ser ativada do estado da sessão
+        selected_section_name = st.session_state.subpagina_selecionada
+        
+        # 2. Calcular o índice da aba a ser ativada (sincronização Sidebar -> Tab)
         try:
-            selected_index = SECTION_NAMES.index(st.session_state.subpagina)
+            selected_index = SECTION_NAMES.index(selected_section_name)
         except ValueError:
             selected_index = 0
 
-        # 2. Criar as abas, forçando a seleção pelo índice do menu lateral
+        # 3. Criar as abas, forçando a seleção pelo índice do menu lateral
+        # Se o usuário clicar diretamente na aba, Streamlit a definirá como ativa.
         abas = st.tabs(SECTION_NAMES, index=selected_index)
         abas_dict = dict(zip(SECTION_NAMES, abas))
 
