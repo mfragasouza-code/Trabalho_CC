@@ -79,7 +79,6 @@ with st.sidebar:
         )
 
     # Submenus (apenas aparecem se um Edital estiver selecionado)
-    subpagina = None # Inicializa subpagina para o escopo do sidebar
     if "40" in menu_principal:
         numero_edital = 40
     # CORRIGIDO: Checagem para "43" e atribuição do número 43
@@ -91,7 +90,7 @@ with st.sidebar:
     if numero_edital:
         with st.expander(f"📘 Edital {numero_edital}/2024 - Seções", expanded=True):
             # O valor selecionado do rádio é salvo diretamente no st.session_state.subpagina_selecionada
-            subpagina = st.radio(
+            st.radio(
                 "Navegue entre as seções:",
                 SECTION_NAMES,
                 key="subpagina_selecionada", # Usa a chave do session_state diretamente
@@ -140,8 +139,12 @@ elif numero_edital:
             selected_index = 0
 
         # 3. Criar as abas, forçando a seleção pelo índice do menu lateral
-        # Não precisa do int() explícito aqui, pois o try/except garante que selected_index é 0 ou o índice.
-        abas = st.tabs(SECTION_NAMES, index=selected_index)
+        # Se houver um erro de tipo, force o índice 0 para evitar quebra
+        try:
+             abas = st.tabs(SECTION_NAMES, index=selected_index)
+        except Exception:
+             abas = st.tabs(SECTION_NAMES, index=0)
+             
         abas_dict = dict(zip(SECTION_NAMES, abas))
 
         # ------------------------------------------------------------
