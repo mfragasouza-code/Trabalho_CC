@@ -138,12 +138,10 @@ elif numero_edital:
         except ValueError:
             selected_index = 0
 
-        # 3. Criar as abas, forçando a seleção pelo índice do menu lateral
-        # Se houver um erro de tipo, force o índice 0 para evitar quebra
-        try:
-             abas = st.tabs(SECTION_NAMES, index=selected_index)
-        except Exception:
-             abas = st.tabs(SECTION_NAMES, index=0)
+        # 3. Criar as abas com uma chave dinâmica baseada no Edital.
+        # Isso ajuda o Streamlit a resetar o componente de abas quando o Edital muda,
+        # evitando conflitos de estado persistente que causam TypeError.
+        abas = st.tabs(SECTION_NAMES, index=selected_index, key=f"abas_{numero_edital}")
              
         abas_dict = dict(zip(SECTION_NAMES, abas))
 
