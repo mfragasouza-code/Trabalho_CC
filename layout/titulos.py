@@ -246,3 +246,4 @@ elif numero_edital:
                         st.markdown(f"**Aguardando análise:** {aguardando}")
                         st.markdown(f"**Documentos analisados:** {documentos}")
                         st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
+
