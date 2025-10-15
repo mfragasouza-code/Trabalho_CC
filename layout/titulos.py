@@ -127,22 +127,21 @@ elif numero_edital:
     if not dados_edital:
         st.warning("⚠️ Nenhum dado encontrado. Verifique os arquivos Excel.")
     else:
-        # 1. Obter a aba a ser ativada do estado da sessão de forma segura
-        selected_section_name = st.session_state.get('subpagina_selecionada', SECTION_NAMES[0])
-        
-        # 2. Calcular o índice da aba a ser ativada (sincronização Sidebar -> Tab)
-        # ⚠️ REFORÇO DE VALIDAÇÃO: Garantir que selected_index seja um inteiro válido.
+        # 1. Tenta obter o índice selecionado de forma segura.
+        #    Se houver qualquer falha (ValueError, TypeError), define selected_index = 0.
         try:
-            temp_index = SECTION_NAMES.index(selected_section_name)
-            # Garantir que o índice seja um inteiro não negativo
-            selected_index = max(0, int(temp_index)) 
-        except (ValueError, TypeError):
-            # Se for inválido, volta para o padrão 0
+            # Pega o nome da seção do session state, com fallback para o primeiro nome
+            selected_section_name = st.session_state.get('subpagina_selecionada', SECTION_NAMES[0])
+            # Encontra o índice correspondente
+            selected_index = SECTION_NAMES.index(selected_section_name)
+        except Exception:
+            # Em caso de qualquer erro (ex: valor não encontrado ou tipo incorreto), usa 0
             selected_index = 0
-
-        # 3. Criar as abas. Apenas se SECTION_NAMES não for vazio e o número do edital estiver definido.
+            
+        # 2. Criar as abas. Apenas se SECTION_NAMES não for vazio e o número do edital estiver definido.
+        #    O índice já está garantido como INT ou 0 neste ponto.
         if SECTION_NAMES and numero_edital:
-            # Usamos a validação de int() e a chave dinâmica
+            # Usamos a chave dinâmica para forçar a recriação correta ao mudar de Edital
             abas = st.tabs(SECTION_NAMES, index=selected_index, key=f"abas_{numero_edital}")
         
             abas_dict = dict(zip(SECTION_NAMES, abas))
