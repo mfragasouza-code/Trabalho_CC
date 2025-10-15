@@ -139,8 +139,8 @@ elif numero_edital:
             selected_index = 0
 
         # 3. Criar as abas, forçando a seleção pelo índice do menu lateral
-        # Agora selected_index tem garantia de ser um inteiro válido (0, 1 ou 2)
-        abas = st.tabs(SECTION_NAMES, index=selected_index)
+        # Garante que selected_index é um inteiro válido
+        abas = st.tabs(SECTION_NAMES, index=int(selected_index))
         abas_dict = dict(zip(SECTION_NAMES, abas))
 
         # ------------------------------------------------------------
@@ -246,4 +246,3 @@ elif numero_edital:
                         st.markdown(f"**Aguardando análise:** {aguardando}")
                         st.markdown(f"**Documentos analisados:** {documentos}")
                         st.markdown(f"**📉 Taxa de não resposta:** {taxa_nao_resposta:.2f}%")
-
